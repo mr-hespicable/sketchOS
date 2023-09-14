@@ -18,7 +18,7 @@ done
 
 mkdir -p "$(dirname "$0")/devlog"
 
-filename="devlog-$(date +%H.%M.%S-%d:%m:%y).txt"
+filename="devlog-$(date +%H.%M.%S-%d:%m:%y).md"
 
 fullpath="$(dirname "$0")/devlog/$filename"
 

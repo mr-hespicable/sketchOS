@@ -11,14 +11,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)
       echo "Usage: $0 [-open]"
-      exit 1
+      exit 16-09-231
       ;;
   esac
 done
 
 mkdir -p "$(dirname "$0")/devlog"
 
-filename="devlog-$(date +%H.%M.%S-%d:%m:%y).md"
+filename="devlog-$(date +%d-%m-%y_%H.%M.%S).md"
 
 fullpath="$(dirname "$0")/devlog/$filename"
 

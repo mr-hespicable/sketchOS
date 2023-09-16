@@ -24,4 +24,4 @@ Cargo.lock
 
 #other gitignore files
 .DS_Store
-.obsidian
+.obsidian/

@@ -8,7 +8,7 @@ mod vga_buffer;
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     //_start() signifies that this is the entry point
-    vga_buffer::test_func();
+    vga_buffer::test();
 
     loop {}
 }

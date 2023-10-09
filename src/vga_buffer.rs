@@ -100,7 +100,5 @@ pub fn test_func() {
         buffer: unsafe { &mut *{ 0xb8000 as *mut Buffer } },
     };
 
-    writer.write_byte(b'H');
-    writer.write_string("ello W");
-    writer.write_string("orld!")
+    writer.write_string("Hello World!")
 }

@@ -93,13 +93,3 @@ impl Writer {
         }
     }
 }
-
-pub fn test_func() {
-    let mut writer = Writer {
-        column_position: 0,
-        color_code: ColorCode::new(Color::Blue, Color::Black), //blue is fg, black is bg
-        buffer: unsafe { &mut *{ 0xb8000 as *mut Buffer } },
-    };
-
-    writer.write_string("Hello World!")
-}

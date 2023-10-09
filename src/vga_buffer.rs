@@ -24,9 +24,9 @@ pub enum Color {
 #[repr(transparent)]
 
 //color code init
-struct color_code(u8);
+struct ColorCode(u8);
 
-impl color_code {
+impl ColorCode {
     fn new(fg: Color, bg: Color) -> ColorCode {
         ColorCode((bg as u8) << 4 | (fg as u8))
     }
@@ -35,7 +35,7 @@ impl color_code {
 //screen character
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
-struct screen_char {
+struct ScreenChar {
     ascii_char: u8,
     color_code: ColorCode,
 }
@@ -45,12 +45,62 @@ const BUFFER_WIDTH: usize = 80;
 
 #[repr(transparent)]
 struct Buffer {
-    chars: [[screen_char; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    chars: [[ScreenChar; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
 //writer type
 pub struct Writer {
     column_position: usize,
-    color_code: color_code,
+    color_code: ColorCode,
     buffer: &'static mut Buffer,
+}
+
+impl Writer {
+    pub fn write_byte(&mut self, byte: u8) {
+        match byte {
+            b'\n' => self.new_line(),
+            byte => {
+                if self.column_position >= BUFFER_WIDTH {
+                    self.new_line();
+                }
+
+                let row = BUFFER_HEIGHT - 1;
+                let col = self.column_position;
+
+                let color_code = self.color_code;
+                self.buffer.chars[row][col] = ScreenChar {
+                    ascii_char: byte,
+                    color_code,
+                };
+                self.column_position += 1;
+            }
+        }
+    }
+
+    fn new_line(&mut self) {
+        /* TODO */
+    }
+
+    pub fn write_string(&mut self, s: &str) {
+        for byte in s.bytes() {
+            match byte {
+                // printable ascii byte or newline
+                0x20..=0x7e | b'\n' => self.write_byte(byte),
+                //not... this.
+                _ => self.write_byte(0xfe),
+            }
+        }
+    }
+}
+
+pub fn test_func() {
+    let mut writer = Writer {
+        column_position: 0,
+        color_code: ColorCode::new(Color::Blue, Color::Black), //blue is fg, black is bg
+        buffer: unsafe { &mut *{ 0xb8000 as *mut Buffer } },
+    };
+
+    writer.write_byte(b'H');
+    writer.write_string("ello W");
+    writer.write_string("orld!")
 }

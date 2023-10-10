@@ -8,7 +8,8 @@ mod vga_buffer;
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     //_start() signifies that this is the entry point
-    vga_buffer::test();
+    use core::fmt::Write;
+    vga_buffer::WRITER.lock().write_str("test").unwrap();
 
     loop {}
 }

@@ -24,13 +24,28 @@ pub fn exit_qemu(exit_code: QemuExitCode) {
     }
 }
 
+pub trait Testable {
+    fn run(&self);
+}
+
+impl<T> Testable for T
+where
+    T: Fn(),
+{
+    fn run(&self) {
+        serial_print!("{}...\t", core::any::type_name::<T>());
+        self();
+        serial_println!("[ok]");
+    }
+}
+
 //don't mangle this function's name (basically, don' fuck it up)
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    println!("Hello World{}", "!");
-
     #[cfg(test)]
     test_main();
+
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 
@@ -52,10 +67,10 @@ fn panic(_info: &PanicInfo) -> ! {
 }
 
 #[cfg(test)]
-fn test_runner(tests: &[&dyn Fn()]) {
+fn test_runner(tests: &[&dyn Testable]) {
     serial_println!("Running {} tests", tests.len());
     for test in tests {
-        test();
+        test.run();
     }
 
     exit_qemu(QemuExitCode::Success);
@@ -63,8 +78,5 @@ fn test_runner(tests: &[&dyn Fn()]) {
 
 #[test_case]
 fn trivial_assertion() {
-    serial_print!("trivial_assertion... ");
     assert_eq!(1, 1);
-    serial_println!("[ok]");
-    loop {}
 }

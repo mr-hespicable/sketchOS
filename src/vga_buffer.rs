@@ -111,5 +111,5 @@ pub fn test() {
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
     };
 
-    write!(writer, "i hope this works");
+    write!(writer, "hello world");
 }

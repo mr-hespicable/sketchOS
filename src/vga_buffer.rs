@@ -28,8 +28,6 @@ pub enum Color {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-
-//color code init
 struct ColorCode(u8);
 
 impl ColorCode {
@@ -119,6 +117,11 @@ impl Writer {
             }
         }
     }
+    pub fn clear_screen(&mut self, row: usize) {
+        for row in 1..BUFFER_HEIGHT {
+            self.clear_row(row)
+        }
+    }
 }
 
 impl Write for Writer {
@@ -139,7 +142,23 @@ macro_rules! println {
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
 }
 
+#[macro_export]
+macro_rules! clear {
+    () => {
+        $crate::vga_buffer::_clear()
+    };
+}
+
 #[doc(hidden)]
 pub fn _print(args: Arguments) {
     WRITER.lock().write_fmt(args).unwrap();
+}
+
+#[doc(hidden)]
+pub fn _clear() {
+    let mut writer = WRITER.lock();
+    for row in 0..BUFFER_HEIGHT {
+        writer.clear_row(row);
+    }
+    writer.column_position = 0;
 }

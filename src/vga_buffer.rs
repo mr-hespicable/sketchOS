@@ -32,7 +32,6 @@ pub enum Color {
 struct ColorCode(u8);
 
 impl ColorCode {
-    //implementation of the structure ColorCode.
     fn new(fg: Color, bg: Color) -> ColorCode {
         ColorCode((bg as u8) << 4 | (fg as u8))
     }

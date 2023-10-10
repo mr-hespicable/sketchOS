@@ -1,5 +1,6 @@
-#![no_std]
 #![no_main]
+#![no_std]
+#![feature(const_)]
 
 use core::panic::PanicInfo;
 mod vga_buffer;

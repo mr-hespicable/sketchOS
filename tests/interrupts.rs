@@ -5,11 +5,12 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
-use sketch_os::{exit_qemu, serial_print, serial_println, QemuExitCode};
+use sketch_os::println;
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    test_breakpoint();
+    sketch_os::init(); //init idt
+    test_main();
 
     #[allow(clippy::empty_loop)]
     loop {}
@@ -17,12 +18,10 @@ pub extern "C" fn _start() -> ! {
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    sketch_os::test_panic_handler(info);
-    exit_qemu(QemuExitCode::Failed);
-    loop {}
+    sketch_os::test_panic_handler(info)
 }
 
-fn test_breakpoint() {
-    serial_print!("breakpoint_interrupt::should_breakpoint_error...\t");
+#[test_case]
+fn test_breakpoints() {
     x86_64::instructions::interrupts::int3();
 }

@@ -48,7 +48,9 @@ pub fn test_panic_handler(_info: &PanicInfo) -> ! {
 #[cfg(test)]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    test_main();
+    //entry point for 'cargo test'
+    init(); //init idt
+    test_main(); //call tets
 
     #[allow(clippy::empty_loop)]
     loop {}

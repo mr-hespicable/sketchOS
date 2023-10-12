@@ -117,11 +117,6 @@ impl Writer {
             }
         }
     }
-    pub fn clear_screen(&mut self, row: usize) {
-        for row in 1..BUFFER_HEIGHT {
-            self.clear_row(row)
-        }
-    }
 }
 
 impl Write for Writer {

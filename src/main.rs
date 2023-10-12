@@ -1,22 +1,24 @@
 #![no_main]
 #![no_std]
 #![feature(custom_test_frameworks)]
+#![feature(abi_x86_interrupt)]
 #![test_runner(sketch_os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
-use sketch_os::clear;
-use sketch_os::println;
+use sketch_os::{clear, print, println};
 
 //don't mangle this function's name (basically, don' fuck it up)
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    println!("hey there. this is a test of the vga buffer on this operating system i am coding, called 'sketch_os'. i'm doing it for my DofE, which is basically a large program that adults (big people) put kids through to make thenm better? i'm not reallys ure of the point.hey there. this is a test of the vga buffer on this operating system i am coding, called 'sketch_os'. i'm doing it for my DofE, which is basically a large program that adults (big people) put kids through to make thenm better? i'm not reallys ure of the point.hey there. this is a test of the vga buffer on this operating system i am coding, called 'sketch_os'. i'm doing it for my DofE, which is basically a large program that adults (big people) put kids through to make thenm better? i'm not reallys ure of the point.hey there. this is a test of the vga buffer on this operating system i am coding, called 'sketch_os'. i'm doing it for my DofE, which is basically a large program that adults (big people) put kids through to make thenm better? i'm not reallys ure of the point. hey there. this is a test of the vga buffer on this operating system i am coding, called 'sketch_os'. i'm doing it for my DofE, which is basically a large program that adults (big people) put kids through to make thenm better? i'm not reallys ure of the point.hey there. this is a test of the vga buffer on this operating system i am coding, called 'sketch_os'. i'm doing it for my DofE, which is basically a large program that adults (big people) put kids through to make thenm better? i'm not reallys ure of the point.hey there. this is a test of the vga buffer on this operating system i am coding, called 'sketch_os'. i'm doing it for my DofE, which is basically a large program that adults (big people) put kids through to make thenm better? i'm not reallys ure of the point.hey there. this is a test of the vga buffer on this operating system i am coding, called 'sketch_os'. i'm doing it for my DofE, which is basically a large program that adults (big people) put kids through to make thenm better? i'm not reallys ure of the point.hey there. this is a test of the vga buffer on this operating system i am coding, called 'sketch_os'. i'm doing it for my DofE, which is basically a large program that adults (big people) put kids through to make thenm better? i'm not reallys ure of the point.hey there. this is a test of the vga buffer on this operating system i am coding, called 'sketch_os'. i'm doing it for my DofE, which is basically a large program that adults (big people) put kids through to make thenm better? i'm not reallys ure of the point.hey there. this is a test of the vga buffer on this operating system i am coding, called 'sketch_os'. i'm doing it for my DofE, which is basically a large program that adults (big people) put kids through to make thenm better? i'm not reallys ure of the point.hey there. this is a test of the vga buffer on this operating system i am coding, called 'sketch_os'. i'm doing it for my Dof");
+    println!("hello world!");
 
-    clear!();
+    sketch_os::init(); //init idt
 
     #[cfg(test)]
     test_main();
+
+    print!("it did not crash!");
 
     #[allow(clippy::empty_loop)]
     loop {}

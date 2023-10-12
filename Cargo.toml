@@ -25,3 +25,7 @@ test-timeout = 10 # in seconds
 [[test]]
 name = "should_panic"
 harness = false
+
+[[test]]
+name = "interrupts"
+harness = false

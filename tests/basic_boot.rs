@@ -7,7 +7,6 @@
 use core::panic::PanicInfo;
 use sketch_os::println;
 
-//don't mangle this function's name (basically, don' fuck it up)
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     test_main();

@@ -6,7 +6,7 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
-use sketch_os::{clear, print, println};
+use sketch_os::{print, println};
 
 //don't mangle this function's name (basically, don' fuck it up)
 #[no_mangle]
@@ -14,8 +14,6 @@ pub extern "C" fn _start() -> ! {
     println!("hello world!");
 
     sketch_os::init(); //init idt
-
-    x86_64::instructions::interrupts::int3();
 
     #[cfg(test)]
     test_main();

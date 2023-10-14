@@ -15,6 +15,12 @@ pub extern "C" fn _start() -> ! {
 
     sketch_os::init(); //init idt
 
+    fn ovrflow() {
+        ovrflow();
+    }
+
+    ovrflow();
+
     #[cfg(test)]
     test_main();
 

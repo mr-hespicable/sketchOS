@@ -15,10 +15,10 @@ pub extern "C" fn _start() -> ! {
 
     sketch_os::init(); //init idt
 
+    #[allow(unconditional_recursion)]
     fn ovrflow() {
         ovrflow();
     }
-
     ovrflow();
 
     #[cfg(test)]

@@ -53,7 +53,7 @@ fn test_breakpoint() {
 fn test_double_fault() {
     set_should_fail(true);
 
-    // Perform the test that may cause a double fault
+    // Perform the test that may cause a normal double fault
     unsafe {
         *(0xdeadbeef as *mut u8) = 42;
     }

@@ -13,7 +13,6 @@ static mut SHOULD_FAIL: bool = false;
 pub extern "C" fn _start() -> ! {
     sketch_os::init(); //init idt
     test_main();
-
     #[allow(clippy::empty_loop)]
     loop {}
 }
@@ -37,12 +36,14 @@ fn panic(info: &PanicInfo) -> ! {
     }
 }
 
-fn panic_should_fail(info: &PanicInfo) -> ! {
+fn panic_should_fail(_info: &PanicInfo) -> ! {
+    set_should_fail(false);
     serial_println!("[ok]");
     exit_qemu(QemuExitCode::Success);
     loop {}
 }
 
+//tests go here
 #[test_case]
 fn test_breakpoint() {
     x86_64::instructions::interrupts::int3();
@@ -57,6 +58,4 @@ fn test_double_fault() {
     unsafe {
         *(0xdeadbeef as *mut u8) = 42;
     }
-
-    set_should_fail(false);
 }

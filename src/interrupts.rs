@@ -1,13 +1,15 @@
 use crate::{gdt, print, println};
 use lazy_static::lazy_static;
+use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 use pic8259::ChainedPics;
-use spin;
+use spin::Mutex;
+use x86_64::instructions::port::Port;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
 
-pub static PICS: spin::Mutex<ChainedPics> = //set PIC offsets
+pub static PICS: Mutex<ChainedPics> = //set PIC offsets
     spin::Mutex::new(unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) });
 
 //PIC things
@@ -15,6 +17,7 @@ pub static PICS: spin::Mutex<ChainedPics> = //set PIC offsets
 #[repr(u8)]
 pub enum InterruptIndex {
     Timer = PIC_1_OFFSET,
+    Keyboard,
 }
 
 impl InterruptIndex {
@@ -36,8 +39,10 @@ lazy_static! { //set idt table
                 .set_stack_index(gdt::DOUBLE_FAULT_IST_INDEX);
         }
         idt[InterruptIndex::Timer.as_usize()]
-            .set_handler_fn(handler_timer_interrupt);
+            .set_handler_fn(handler_interrupt_timer);
 
+        idt[InterruptIndex::Keyboard.as_usize()]
+            .set_handler_fn(handler_interrupt_keyboard);
         idt
     };
 }
@@ -46,7 +51,6 @@ pub fn init_idt() {
     //init idt
     IDT.load(); //loads lazy static
 }
-
 extern "x86-interrupt" fn handler_breakpoint(stack_frame: InterruptStackFrame) {
     //breakpoint handle
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
@@ -59,8 +63,29 @@ extern "x86-interrupt" fn handler_double_fault(
     panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
 }
 
-extern "x86-interrupt" fn handler_timer_interrupt(_stack_frame: InterruptStackFrame) {
+extern "x86-interrupt" fn handler_interrupt_timer(_stack_frame: InterruptStackFrame) {
     print!(".");
+
+    unsafe {
+        PICS.lock()
+            .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
+    }
+}
+
+extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStackFrame) {
+    let mut port = Port::new(0x60);
+    let scancode: u8 = unsafe { port.read() };
+
+    let key = match scancode {
+        0x02 => Some('1'),
+        0x03 => Some('2'),
+        0x04 => Some('3'),
+        0x05 => Some('4'),
+        _ => None,
+    };
+    if let Some(key) = key {
+        print!("{}", key);
+    }
 
     unsafe {
         PICS.lock()

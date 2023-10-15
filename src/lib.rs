@@ -43,7 +43,7 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
     serial_println!("[failed]\n");
     serial_println!("Error: {}\n", info);
     exit_qemu(QemuExitCode::Failed);
-    loop {}
+    hlt_loop();
 }
 
 #[cfg(test)]
@@ -52,9 +52,7 @@ pub extern "C" fn _start() -> ! {
     //entry point for 'cargo test'
     init(); //init idt
     test_main(); //call tets
-
-    #[allow(clippy::empty_loop)]
-    loop {}
+    sketch_os::hlt_loop();
 }
 
 #[cfg(test)]
@@ -84,4 +82,14 @@ pub fn init() {
     gdt::init();
     //initialization of the interrupt descriptor table
     interrupts::init_idt();
+    //initialization of the 8259 PIC
+    unsafe { interrupts::PICS.lock().initialize() };
+    //enable interrupts
+    x86_64::instructions::interrupts::enable();
+}
+
+pub fn hlt_loop() -> ! {
+    loop {
+        x86_64::instructions::hlt();
+    }
 }

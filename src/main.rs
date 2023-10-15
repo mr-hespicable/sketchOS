@@ -18,10 +18,9 @@ pub extern "C" fn _start() -> ! {
     #[cfg(test)]
     test_main();
 
-    print!("it did not crash!");
+    println!("it did not crash!");
 
-    #[allow(clippy::empty_loop)]
-    loop {}
+    sketch_os::hlt_loop();
 }
 
 //call this on panic
@@ -29,7 +28,7 @@ pub extern "C" fn _start() -> ! {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{info}");
-    loop {}
+    sketch_os::hlt_loop();
 }
 
 #[cfg(test)]

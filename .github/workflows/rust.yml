@@ -26,4 +26,4 @@ jobs:
             - name: Build
               run: cargo build --target x86_64-sketchOS.json --verbose
             - name: Run tests
-              run: cargo test --verbose
+              run: cargo test --target x86_64-sketchOS.json --verbose

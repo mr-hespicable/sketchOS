@@ -52,7 +52,7 @@ pub extern "C" fn _start() -> ! {
     //entry point for 'cargo test'
     init(); //init idt
     test_main(); //call tets
-    sketch_os::hlt_loop();
+    hlt_loop();
 }
 
 #[cfg(test)]

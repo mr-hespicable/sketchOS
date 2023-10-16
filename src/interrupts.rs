@@ -86,10 +86,10 @@ extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStac
         if let Some(key) = keyboard.process_keyevent(key_event) {
             match key {
                 DecodedKey::Unicode(character) => {
-                    if scancode == 14 {
-                        print!(" backspace ");
+                    if scancode == 14 { //backspace
+                         //TODO: add delete implementation
                     } else {
-                        print!("character");
+                        print!("{}", character);
                     }
                 }
                 DecodedKey::RawKey(key) => print!("{:?}", key),

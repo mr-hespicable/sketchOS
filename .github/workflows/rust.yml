@@ -16,6 +16,8 @@ jobs:
             - uses: actions/checkout@v4
             - name: Get Nightly Build
               run: rustup override set nightly
+            - name: Build Standard Library
+              run: cargo build -Z build-std
             - name: Add Core
               run: rustup target add x86_64-sketchOS
             - name: Check Cargo Version

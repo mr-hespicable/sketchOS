@@ -11,15 +11,12 @@ use sketch_os::{clear, print, println};
 //don't mangle this function's name (basically, don' fuck it up)
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    println!("hello world!");
+    println!("1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n10\n11\n12\n12\n12\n12n12\n12\n12");
 
     sketch_os::init(); //init idt
 
     #[cfg(test)]
     test_main();
-
-    println!("it did not crash!");
-
     sketch_os::hlt_loop();
 }
 

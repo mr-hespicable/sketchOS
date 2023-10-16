@@ -6,7 +6,7 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
-use sketch_os::{print, println};
+use sketch_os::{clear, print, println};
 
 //don't mangle this function's name (basically, don' fuck it up)
 #[no_mangle]

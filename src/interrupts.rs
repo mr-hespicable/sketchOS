@@ -64,8 +64,6 @@ extern "x86-interrupt" fn handler_double_fault(
 }
 
 extern "x86-interrupt" fn handler_interrupt_timer(_stack_frame: InterruptStackFrame) {
-    print!(".");
-
     unsafe {
         PICS.lock()
             .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
@@ -73,18 +71,30 @@ extern "x86-interrupt" fn handler_interrupt_timer(_stack_frame: InterruptStackFr
 }
 
 extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStackFrame) {
+    lazy_static! {
+        static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> = Mutex::new(
+            Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore)
+        );
+    }
+
     let mut port = Port::new(0x60);
+    let mut keyboard = KEYBOARD.lock();
+
     let scancode: u8 = unsafe { port.read() };
 
-    let key = match scancode {
-        0x02 => Some('1'),
-        0x03 => Some('2'),
-        0x04 => Some('3'),
-        0x05 => Some('4'),
-        _ => None,
-    };
-    if let Some(key) = key {
-        print!("{}", key);
+    if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
+        if let Some(key) = keyboard.process_keyevent(key_event) {
+            match key {
+                DecodedKey::Unicode(character) => {
+                    if scancode == 14 {
+                        print!(" backspace ");
+                    } else {
+                        print!("character");
+                    }
+                }
+                DecodedKey::RawKey(key) => print!("{:?}", key),
+            }
+        }
     }
 
     unsafe {

@@ -15,7 +15,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - name: List Files
-              run: l
+              run: ls
             - name: Check Version
               run: cargo --version
             - name: Build

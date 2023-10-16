@@ -14,8 +14,8 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - name: List Files
-              run: ls
+            - name: Add Core
+              run: rustup target add x86_64-sketchOS
             - name: Check Version
               run: cargo --version
             - name: Build

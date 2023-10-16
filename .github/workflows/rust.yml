@@ -14,10 +14,14 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            - name: Get Nightly Build
+              run: rustup override set nightly
             - name: Add Core
               run: rustup target add x86_64-sketchOS
-            - name: Check Version
+            - name: Check Cargo Version
               run: cargo --version
+            - name: Check rustc Version
+              run: rustc --version
             - name: Build
               run: cargo build --verbose
             - name: Run tests

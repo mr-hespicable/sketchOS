@@ -17,6 +17,10 @@ jobs:
             - uses: actions/checkout@v4
             - name: Get Nightly Build
               run: rustup override set nightly
+            - name: Install QEMU
+              run: sudo apt update && sudo apt install -y qemu-system-x86
+            - name: Print QEMU Version
+              run: qemu-system-x86_64 --version
             - name: Add rust-src
               run: rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
             - name: Add llvm-tools 

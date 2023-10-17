@@ -1,4 +1,4 @@
-use crate::{gdt, print, println};
+use crate::{backspace, gdt, print, println};
 use lazy_static::lazy_static;
 use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 use pic8259::ChainedPics;
@@ -86,8 +86,9 @@ extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStac
         if let Some(key) = keyboard.process_keyevent(key_event) {
             match key {
                 DecodedKey::Unicode(character) => {
-                    if scancode == 14 { //backspace
-                         //TODO: add delete implementation
+                    if scancode == 14 {
+                        //backspace
+                        backspace!();
                     } else {
                         print!("{}", character);
                     }

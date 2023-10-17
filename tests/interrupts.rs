@@ -21,6 +21,7 @@ fn should_fail() -> bool {
     //if this is true: fail panic thing, else: non-fail panic thing.
     unsafe { SHOULD_FAIL }
 }
+
 fn set_should_fail(val: bool) {
     unsafe {
         SHOULD_FAIL = val;

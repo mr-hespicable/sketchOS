@@ -89,6 +89,15 @@ impl Writer {
         }
     }
 
+    pub fn delete_byte(&mut self) {
+        let row = self.row_position;
+        let column = self.column_position;
+
+        self.column_position -= 1; //moves cursor back
+        self.write_byte(b' '); //deletes previous character
+        self.column_position -= 1; //moves cursor back again
+    }
+
     fn new_line(&mut self) {
         if self.row_position + 2 > BUFFER_HEIGHT {
             for row in 1..BUFFER_HEIGHT {
@@ -152,6 +161,13 @@ macro_rules! clear {
     };
 }
 
+#[macro_export]
+macro_rules! backspace {
+    () => {
+        $crate::vga_buffer::_delete()
+    };
+}
+
 #[doc(hidden)]
 pub fn _print(args: Arguments) {
     interrupts::without_interrupts(|| {
@@ -162,9 +178,18 @@ pub fn _print(args: Arguments) {
 
 #[doc(hidden)]
 pub fn _clear() {
-    let mut writer = WRITER.lock();
-    for row in 0..BUFFER_HEIGHT {
-        writer.clear_row(row);
-    }
-    writer.column_position = 0;
+    interrupts::without_interrupts(|| {
+        let mut writer = WRITER.lock();
+        for row in 0..BUFFER_HEIGHT {
+            writer.clear_row(row);
+        }
+        writer.column_position = 0;
+    });
+}
+
+pub fn _delete() {
+    interrupts::without_interrupts(|| {
+        let mut writer = WRITER.lock();
+        writer.delete_byte();
+    });
 }

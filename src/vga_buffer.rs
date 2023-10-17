@@ -129,7 +129,7 @@ impl Writer {
             match byte {
                 // printable ascii byte or newline
                 0x20..=0x7e | b'\n' => self.write_byte(byte),
-                //not... this.
+                //if not... this.
                 _ => self.write_byte(0xfe),
             }
         }
@@ -187,6 +187,7 @@ pub fn _clear() {
     });
 }
 
+#[doc(hidden)]
 pub fn _delete() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();

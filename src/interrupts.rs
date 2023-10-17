@@ -1,10 +1,13 @@
 use crate::{backspace, gdt, print, println};
+use core::fmt::Write;
 use lazy_static::lazy_static;
 use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 use pic8259::ChainedPics;
 use spin::Mutex;
 use x86_64::instructions::port::Port;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
+
+use crate::vga_buffer::{Writer, WRITER};
 
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
@@ -83,6 +86,7 @@ extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStac
     let scancode: u8 = unsafe { port.read() };
 
     if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
+        //write keyboard thing to screen
         if let Some(key) = keyboard.process_keyevent(key_event) {
             match key {
                 DecodedKey::Unicode(character) => {
@@ -93,7 +97,15 @@ extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStac
                         print!("{}", character);
                     }
                 }
-                DecodedKey::RawKey(key) => print!("{:?}", key),
+                DecodedKey::RawKey(key) => {
+                    if scancode == 75 {
+                        //left
+                    } else if scancode == 77 {
+                        //right
+                    } else {
+                        print!("{:?}", key);
+                    }
+                }
             }
         }
     }

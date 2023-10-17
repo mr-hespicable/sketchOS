@@ -134,6 +134,14 @@ impl Writer {
             }
         }
     }
+
+    pub fn move_cursor(&mut self, direction: u8) {
+        if direction == 0 {
+            self.row_position -= 1;
+        } else if direction == 1 && self.row_position < BUFFER_WIDTH {
+            self.row_position += 1;
+        }
+    }
 }
 
 impl Write for Writer {

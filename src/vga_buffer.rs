@@ -107,9 +107,20 @@ impl Writer {
     }
 
     pub fn delete_byte(&mut self) {
-        self.column_position -= 1; //moves cursor back
-        self.write_byte(b' '); //deletes previous character
-        self.column_position -= 1; //moves cursor back again
+        let row = self.row_position;
+        let col = self.column_position;
+        let color_code = self.color_code;
+
+        if (self.column_position - 1) < 0 {
+            self.write_string("ruh roh raggy")
+        } else {
+            self.buffer.chars[row][col - 1].write(ScreenChar {
+                ascii_char: b' ',
+                color_code,
+            });
+        }
+
+        self.column_position -= 1;
         self.text_position -= 1;
     }
 

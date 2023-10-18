@@ -55,6 +55,7 @@ struct Buffer {
 pub struct Writer {
     column_position: usize,
     row_position: usize,
+    text_position: usize,
     color_code: ColorCode,
     buffer: &'static mut Buffer,
 }
@@ -63,6 +64,7 @@ lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
         row_position: 0,
+        text_position: 0,
         color_code: ColorCode::new(Color::Yellow, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
     });
@@ -79,23 +81,36 @@ impl Writer {
                 let row = self.row_position;
                 let col = self.column_position;
 
+                if self.column_position != self.text_position {
+                    self.move_chars();
+                }
+
                 let color_code = self.color_code;
+
                 self.buffer.chars[row][col].write(ScreenChar {
                     ascii_char: byte,
                     color_code,
                 });
                 self.column_position += 1;
+                self.text_position += 1;
             }
         }
     }
 
-    pub fn delete_byte(&mut self) {
-        let row = self.row_position;
-        let column = self.column_position;
+    fn move_chars(&mut self) {
+        //for row in self.row_position..BUFFER_HEIGHT {
+        for col in (self.column_position..self.text_position).rev() {
+            let character = self.buffer.chars[self.row_position][col].read();
+            self.buffer.chars[self.row_position][col + 1].write(character);
+        }
+        //}
+    }
 
+    pub fn delete_byte(&mut self) {
         self.column_position -= 1; //moves cursor back
         self.write_byte(b' '); //deletes previous character
         self.column_position -= 1; //moves cursor back again
+        self.text_position -= 1;
     }
 
     fn new_line(&mut self) {
@@ -112,6 +127,7 @@ impl Writer {
         self.clear_row(BUFFER_HEIGHT - 1);
 
         self.column_position = 0;
+        self.text_position = 0;
     }
 
     fn clear_row(&mut self, row: usize) {
@@ -135,11 +151,12 @@ impl Writer {
         }
     }
 
-    pub fn move_cursor(&mut self, direction: u8) {
+    pub fn move_cursor(&mut self, direction: i32) {
+        // DO NOT CHANGE TEXT POSITION HERE
         if direction == 0 {
-            self.row_position -= 1;
-        } else if direction == 1 && self.row_position < BUFFER_WIDTH {
-            self.row_position += 1;
+            self.column_position -= 1;
+        } else if direction == 1 && self.column_position < self.text_position {
+            self.column_position += 1;
         }
     }
 }
@@ -178,7 +195,12 @@ macro_rules! backspace {
 
 #[macro_export]
 macro_rules! move_cursor {
-    ($($arg:tt)*) => ($crate::vga_buffer::_move_cursor(format_args!($($arg)*)));
+    (0) => {
+        $crate::vga_buffer::_move_cursor_left();
+    };
+    (1) => {
+        $crate::vga_buffer::_move_cursor_right();
+    };
 }
 
 #[doc(hidden)]
@@ -209,8 +231,17 @@ pub fn _delete() {
 }
 
 #[doc(hidden)]
-pub fn _move_cursor(args: Arguments) {
+pub fn _move_cursor_left() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writer.move_cursor(args).unwrap();
+        writer.move_cursor(0);
+    });
+}
+
+#[doc(hidden)]
+pub fn _move_cursor_right() {
+    interrupts::without_interrupts(|| {
+        let mut writer = WRITER.lock();
+        writer.move_cursor(1);
+    });
 }

@@ -1,4 +1,4 @@
-use crate::{backspace, gdt, print, println};
+use crate::{backspace, gdt, move_cursor, print, println};
 use core::fmt::Write;
 use lazy_static::lazy_static;
 use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};

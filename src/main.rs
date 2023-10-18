@@ -18,7 +18,6 @@ pub extern "C" fn _start() -> ! {
     test_main();
     sketch_os::hlt_loop();
 }
-
 //call this on panic
 #[cfg(not(test))]
 #[panic_handler]

@@ -1,9 +1,9 @@
+use crate::print;
 use core::fmt::{Arguments, Result, Write};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
 use x86_64::instructions::interrupts;
-
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -53,9 +53,10 @@ struct Buffer {
 
 //writer type
 pub struct Writer {
-    column_position: usize,
-    row_position: usize,
-    text_position: usize,
+    column_position: usize, //the position of the cursor (column-wise).
+    row_position: usize,    //the position of the row (row-wise).
+    text_column: usize,     //the position of the text on the screen (column-wise).
+    text_row: usize,        //the position of the text on the screen (row-wise).
     color_code: ColorCode,
     buffer: &'static mut Buffer,
 }
@@ -64,7 +65,8 @@ lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
         row_position: 0,
-        text_position: 0,
+        text_column: 0,
+        text_row: 0,
         color_code: ColorCode::new(Color::Yellow, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
     });
@@ -81,7 +83,7 @@ impl Writer {
                 let row = self.row_position;
                 let col = self.column_position;
 
-                if self.column_position != self.text_position {
+                if self.column_position != self.text_column {
                     self.move_chars();
                 }
 
@@ -92,18 +94,19 @@ impl Writer {
                     color_code,
                 });
                 self.column_position += 1;
-                self.text_position += 1;
+                self.text_column += 1;
             }
         }
     }
 
     fn move_chars(&mut self) {
-        //for row in self.row_position..BUFFER_HEIGHT {
-        for col in (self.column_position..self.text_position).rev() {
-            let character = self.buffer.chars[self.row_position][col].read();
-            self.buffer.chars[self.row_position][col + 1].write(character);
+        for row in (self.row_position..self.text_row).rev() {
+            for col in (self.column_position..self.text_column).rev() {
+                let character = self.buffer.chars[row][col].read();
+
+                self.buffer.chars[row][col + 1].write(character);
+            }
         }
-        //}
     }
 
     pub fn delete_byte(&mut self) {
@@ -111,17 +114,25 @@ impl Writer {
         let col = self.column_position;
         let color_code = self.color_code;
 
-        if (self.column_position - 1) < 0 {
-            self.write_string("ruh roh raggy")
+        if col == 0 {
+            self.row_position -= 1;
+            self.text_row -= 1;
+            self.column_position = BUFFER_WIDTH - 1;
+            self.text_column = BUFFER_WIDTH - 1;
+
+            self.buffer.chars[self.row_position][self.column_position].write(ScreenChar {
+                ascii_char: b' ',
+                color_code,
+            })
         } else {
             self.buffer.chars[row][col - 1].write(ScreenChar {
                 ascii_char: b' ',
                 color_code,
             });
-        }
 
-        self.column_position -= 1;
-        self.text_position -= 1;
+            self.column_position -= 1;
+            self.text_column -= 1;
+        }
     }
 
     fn new_line(&mut self) {
@@ -134,11 +145,12 @@ impl Writer {
             }
         } else {
             self.row_position += 1;
+            self.text_row += 1;
         }
         self.clear_row(BUFFER_HEIGHT - 1);
 
         self.column_position = 0;
-        self.text_position = 0;
+        self.text_column = 0;
     }
 
     fn clear_row(&mut self, row: usize) {
@@ -164,9 +176,14 @@ impl Writer {
 
     pub fn move_cursor(&mut self, direction: i32) {
         // DO NOT CHANGE TEXT POSITION HERE
-        if direction == 0 {
+        let col = self.column_position;
+
+        if direction == 0 && col > 0 {
             self.column_position -= 1;
-        } else if direction == 1 && self.column_position < self.text_position {
+        } else if direction == 0 && col == 0 {
+            self.row_position -= 1;
+            self.column_position = BUFFER_WIDTH - 1;
+        } else if direction == 1 && col < self.text_column {
             self.column_position += 1;
         }
     }

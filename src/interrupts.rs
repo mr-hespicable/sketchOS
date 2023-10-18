@@ -99,9 +99,9 @@ extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStac
                 }
                 DecodedKey::RawKey(key) => {
                     if scancode == 75 {
-                        //left
+                        move_cursor!(0);
                     } else if scancode == 77 {
-                        //right
+                        move_cursor!(1);
                     } else {
                         print!("{:?}", key);
                     }

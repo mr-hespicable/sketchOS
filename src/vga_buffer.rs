@@ -176,6 +176,11 @@ macro_rules! backspace {
     };
 }
 
+#[macro_export]
+macro_rules! move_cursor {
+    ($($arg:tt)*) => ($crate::vga_buffer::_move_cursor(format_args!($($arg)*)));
+}
+
 #[doc(hidden)]
 pub fn _print(args: Arguments) {
     interrupts::without_interrupts(|| {
@@ -201,4 +206,11 @@ pub fn _delete() {
         let mut writer = WRITER.lock();
         writer.delete_byte();
     });
+}
+
+#[doc(hidden)]
+pub fn _move_cursor(args: Arguments) {
+    interrupts::without_interrupts(|| {
+        let mut writer = WRITER.lock();
+        writer.move_cursor(args).unwrap();
 }

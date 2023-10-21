@@ -84,7 +84,7 @@ impl Writer {
                 let col = self.column_position;
 
                 if self.column_position != self.text_column {
-                    self.move_chars();
+                    self.move_chars(1);
                 }
 
                 let color_code = self.color_code;
@@ -99,13 +99,35 @@ impl Writer {
         }
     }
 
-    fn move_chars(&mut self) {
-        for row in (self.row_position..self.text_row).rev() {
-            for col in (self.column_position..self.text_column).rev() {
-                let character = self.buffer.chars[row][col].read();
-
-                self.buffer.chars[row][col + 1].write(character);
+    pub fn move_chars(&mut self, direction: i32) {
+        //0 means move left, 1 means move right
+        if direction == 0 {
+            for row in (self.row_position..self.text_row + 1) {
+                for col in (self.column_position..self.text_column) {
+                    let character = self.buffer.chars[row][col].read();
+                    if col - 1 >= 0 {
+                        self.buffer.chars[row][col - 1].write(character);
+                    } else {
+                        self.buffer.chars[row - 1][0].write(character);
+                        self.text_row -= 1;
+                    }
+                }
             }
+        } else if direction == 1 {
+            for row in (self.row_position..self.text_row + 1).rev() {
+                for col in (self.column_position..self.text_column).rev() {
+                    let character = self.buffer.chars[row][col].read();
+                    if col + 1 < BUFFER_WIDTH {
+                        self.buffer.chars[row][col + 1].write(character);
+                    } else {
+                        self.buffer.chars[row + 1][0].write(character);
+                    }
+                }
+            }
+            self.buffer.chars[self.text_row][self.text_column].write(ScreenChar {
+                ascii_char: b' ',
+                color_code: self.color_code,
+            });
         }
     }
 
@@ -123,7 +145,8 @@ impl Writer {
             self.buffer.chars[self.row_position][self.column_position].write(ScreenChar {
                 ascii_char: b' ',
                 color_code,
-            })
+            });
+            self.move_chars(0);
         } else {
             self.buffer.chars[row][col - 1].write(ScreenChar {
                 ascii_char: b' ',
@@ -132,6 +155,7 @@ impl Writer {
 
             self.column_position -= 1;
             self.text_column -= 1;
+            self.move_chars(0);
         }
     }
 
@@ -210,14 +234,14 @@ macro_rules! println {
 #[macro_export]
 macro_rules! clear {
     () => {
-        $crate::vga_buffer::_clear()
+        $crate::vga_buffer::_clear();
     };
 }
 
 #[macro_export]
 macro_rules! backspace {
     () => {
-        $crate::vga_buffer::_delete()
+        $crate::vga_buffer::_delete();
     };
 }
 
@@ -228,6 +252,16 @@ macro_rules! move_cursor {
     };
     (1) => {
         $crate::vga_buffer::_move_cursor_right();
+    };
+}
+
+#[macro_export]
+macro_rules! move_chars {
+    (0) => {
+        $crate::vga_buffer::_move_chars_left();
+    };
+    (1) => {
+        $crate::vga_buffer::_move_chars_right();
     };
 }
 
@@ -271,5 +305,21 @@ pub fn _move_cursor_right() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
         writer.move_cursor(1);
+    });
+}
+
+#[doc(hidden)]
+pub fn _move_chars_left() {
+    interrupts::without_interrupts(|| {
+        let mut writer = WRITER.lock();
+        writer.move_chars(0);
+    });
+}
+
+#[doc(hidden)]
+pub fn _move_chars_right() {
+    interrupts::without_interrupts(|| {
+        let mut writer = WRITER.lock();
+        writer.move_chars(1);
     });
 }

@@ -14,3 +14,4 @@ TODO list for now:
 TODO for the future:
 - [ ] file management system
 - [ ] add cli
+- [ ] add unix stuff

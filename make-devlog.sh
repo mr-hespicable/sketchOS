@@ -26,5 +26,5 @@ touch "$fullpath"
 echo "created $filename at $fullpath"
 
 if [ "$create_only" = false ]; then
-  nvim $fullpath
+  lvim $fullpath
 fi

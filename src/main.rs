@@ -7,7 +7,6 @@
 
 use core::panic::PanicInfo;
 use sketch_os::println;
-use sketch_os::vga_buffer::{Writer, WRITER};
 
 //don't mangle this function's name (basically, don' fuck it up)
 #[no_mangle]
@@ -31,3 +30,4 @@ fn panic(info: &PanicInfo) -> ! {
 fn panic(info: &PanicInfo) -> ! {
     sketch_os::test_panic_handler(info)
 }
+

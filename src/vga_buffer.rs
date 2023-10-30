@@ -53,8 +53,8 @@ struct Buffer {
 
 //writer type
 pub struct Writer {
-    column_position: usize, //the position of the cursor (column-wise).
-    row_position: usize,    //the position of the row (row-wise).
+    cursor_column: usize, //the position of the cursor (column-wise).
+    cursor_row: usize,    //the position of the row (row-wise).
     text_column: usize,     //the position of the text on the screen (column-wise).
     text_row: usize,        //the position of the text on the screen (row-wise).
     color_code: ColorCode,
@@ -63,8 +63,8 @@ pub struct Writer {
 
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
-        column_position: 0,
-        row_position: 0,
+        cursor_column: 0,
+        cursor_row: 0,
         text_column: 0,
         text_row: 0,
         color_code: ColorCode::new(Color::Yellow, Color::Black),
@@ -76,14 +76,14 @@ impl Writer {
         match byte {
             b'\n' => self.new_line(),
             byte => {
-                if self.column_position >= BUFFER_WIDTH {
+                if self.cursor_column >= BUFFER_WIDTH {
                     self.new_line();
                 }
 
-                let row = self.row_position;
-                let col = self.column_position;
+                let row = self.cursor_row;
+                let col = self.cursor_column;
 
-                if self.column_position != self.text_column {
+                if self.cursor_column - 1 != self.text_column && (self.cursor_column != 0 || self.text_row == self.cursor_row) {
                     self.move_chars(1);
                 }
 
@@ -93,8 +93,10 @@ impl Writer {
                     ascii_char: byte,
                     color_code,
                 });
-                self.column_position += 1;
-                self.text_column += 1;
+                self.cursor_column += 1;
+                if self.cursor_row != 1 {
+                    self.text_column += 1;
+                }
             }
         }
     }
@@ -102,65 +104,91 @@ impl Writer {
     pub fn move_chars(&mut self, direction: i32) {
         //0 means move left, 1 means move right
         if direction == 0 {
-            for row in (self.row_position..self.text_row + 1) {
-                for col in (self.column_position..self.text_column) {
-                    let character = self.buffer.chars[row][col].read();
-                    if col - 1 >= 0 {
-                        self.buffer.chars[row][col - 1].write(character);
-                    } else {
-                        self.buffer.chars[row - 1][0].write(character);
-                        self.text_row -= 1;
+            for row in self.cursor_row..self.text_row + 1 {
+                if row == self.text_row { // end of text block
+                    for col in 0..self.text_column + 1 {
+                        let character = self.buffer.chars[row][col].read();
+                        if col == 0 {
+                            self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
+
+                        } else {
+                            self.buffer.chars[row][col-1].write(character);
+                        }
                     }
+                } else if row == self.cursor_row { //beginning of text block
+                    for col in self.cursor_column..BUFFER_WIDTH {
+                        let character = self.buffer.chars[row][col].read();
+                        if col == 0 {
+                            self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
+                        } else {
+                            self.buffer.chars[row][col-1].write(character);
+                        }
+                    }
+                } else { //middle of text block
+                    for col in 0..BUFFER_WIDTH {
+                        let character = self.buffer.chars[row][col].read();
+                        if col == 0 {
+                            self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
+                        } else {
+                            self.buffer.chars[row][col-1].write(character);
+                        }
+                    } 
                 }
             }
         } else if direction == 1 {
-            for row in (self.row_position..self.text_row + 1).rev() {
-                for col in (self.column_position..self.text_column).rev() {
-                    let character = self.buffer.chars[row][col].read();
-                    if col + 1 < BUFFER_WIDTH {
-                        self.buffer.chars[row][col + 1].write(character);
-                    } else {
-                        self.buffer.chars[row + 1][0].write(character);
-                    }
-                }
+            for row in (self.cursor_row..self.text_row + 1).rev() {
             }
             self.buffer.chars[self.text_row][self.text_column].write(ScreenChar {
                 ascii_char: b' ',
                 color_code: self.color_code,
             });
+        } else {
+            panic!("non binary value inputted into move_chars")
         }
     }
 
     pub fn delete_byte(&mut self) {
-        let row = self.row_position;
-        let col = self.column_position;
+        let row = self.cursor_row;
+        let col = self.cursor_column;
         let color_code = self.color_code;
 
         if col == 0 {
-            self.row_position -= 1;
-            self.text_row -= 1;
-            self.column_position = BUFFER_WIDTH - 1;
-            self.text_column = BUFFER_WIDTH - 1;
-
-            self.buffer.chars[self.row_position][self.column_position].write(ScreenChar {
+            self.buffer.chars[row - 1][BUFFER_WIDTH - 1].write(ScreenChar {
                 ascii_char: b' ',
                 color_code,
             });
-            self.move_chars(0);
+
+            if self.cursor_column != self.text_column {
+                self.move_chars(0);
+            }
+
+            self.cursor_row -= 1;
+            self.cursor_column = BUFFER_WIDTH - 1;
+
+            if self.text_column == 0 {
+                self.text_row -= 1;
+                self.text_column = BUFFER_WIDTH - 1;
+            } else {
+                self.text_column -= 1;
+            }
+
         } else {
             self.buffer.chars[row][col - 1].write(ScreenChar {
                 ascii_char: b' ',
                 color_code,
             });
 
-            self.column_position -= 1;
+            if self.cursor_column != self.text_column {
+                self.move_chars(0);
+            }
+
+            self.cursor_column -= 1;
             self.text_column -= 1;
-            self.move_chars(0);
         }
     }
 
     fn new_line(&mut self) {
-        if self.row_position + 2 > BUFFER_HEIGHT {
+        if self.cursor_row + 2 > BUFFER_HEIGHT {
             for row in 1..BUFFER_HEIGHT {
                 for col in 0..BUFFER_WIDTH {
                     let character = self.buffer.chars[row][col].read();
@@ -168,12 +196,12 @@ impl Writer {
                 }
             }
         } else {
-            self.row_position += 1;
+            self.cursor_row += 1;
             self.text_row += 1;
         }
         self.clear_row(BUFFER_HEIGHT - 1);
 
-        self.column_position = 0;
+        self.cursor_column = 0;
         self.text_column = 0;
     }
 
@@ -200,15 +228,15 @@ impl Writer {
 
     pub fn move_cursor(&mut self, direction: i32) {
         // DO NOT CHANGE TEXT POSITION HERE
-        let col = self.column_position;
+        let col = self.cursor_column;
 
         if direction == 0 && col > 0 {
-            self.column_position -= 1;
+            self.cursor_column -= 1;
         } else if direction == 0 && col == 0 {
-            self.row_position -= 1;
-            self.column_position = BUFFER_WIDTH - 1;
+            self.cursor_row -= 1;
+            self.cursor_column = BUFFER_WIDTH - 1;
         } else if direction == 1 && col < self.text_column {
-            self.column_position += 1;
+            self.cursor_column += 1;
         }
     }
 }
@@ -280,7 +308,7 @@ pub fn _clear() {
         for row in 0..BUFFER_HEIGHT {
             writer.clear_row(row);
         }
-        writer.column_position = 0;
+        writer.cursor_column = 0;
     });
 }
 

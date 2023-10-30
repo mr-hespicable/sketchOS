@@ -8,27 +8,15 @@ finally started back on the project after a week-ish long hiatus. this allowed m
 
 i am working on the `move_chars` function in `src/vga_buffer.rs`, which handles the moving of characters when the index of cursor position is not equal to the index of the text position.
 
-the function should be called when this condition is satisfied, and: 
-- on backspace (to move the characters left) 
-- on keyboard input (to move the characters right)
+the function should be called when this condition is satisfied, on backspace (to move the characters left) and on keyboard input (to move the characters right)
 
-**<u>updates</u>**
+##### updates
 
 20:42
+
 - still working on `move_chars`. figuring out where and when to change `cursor_position` and `column_position`
 
 22:21
+
 - took a short break (made tea yum)
 - undid deletion of `delete_byte`... that works fine as is, and should probably make changes in `move_chars`
-
-22:54
-- edited `delete_byte` to move stuff after character is deleted.
-- the problem lies in `delete_byte`: i have to figure out when to change `self.text_row`
-
-23:05 
-- starting implementation of an `if` statement to change `self.text_row` when `self.text_column` = 0.    
-this should allow me to make `move_chars` work, at least to move them left.
-
-23:47
-- changing `self.text_column` implementation, since i designed it wrong.
-- i should probably sleep soon...

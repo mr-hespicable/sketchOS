@@ -12,6 +12,8 @@ use sketch_os::println;
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     sketch_os::init(); //init idt
+    
+    println!("this is a test of cursor offset typing. this line is going to ");
 
     #[cfg(test)]
     test_main();

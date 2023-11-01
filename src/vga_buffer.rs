@@ -1,4 +1,4 @@
-use crate::print;
+use crate::{print, serial_println};
 use core::fmt::{Arguments, Result, Write};
 use lazy_static::lazy_static;
 use spin::Mutex;

@@ -6,14 +6,14 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
-use sketch_os::println;
+use sketch_os::{print, println};
 
-//don't mangle this function's name (basically, don' fuck it up)
+//don't mangle this function's name (basically, don' mess it up)
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     sketch_os::init(); //init idt
     
-    println!("this is a test of cursor offset typing. this line is going to ");
+    print!("1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEFhey");
 
     #[cfg(test)]
     test_main();

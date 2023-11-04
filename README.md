@@ -5,4 +5,4 @@ this code is licensed under the
 
 ### devlog
 the devlog format is as follows:
-DD-MM-YY_HH-MM-SS
+YY-MM-DD_HH.MM.SS

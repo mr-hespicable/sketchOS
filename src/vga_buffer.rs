@@ -102,36 +102,57 @@ impl Writer {
     pub fn move_chars(&mut self, direction: i32) {
         //0 means move left, 1 means move right
         if direction == 0 {
-            for row in self.cursor_row..self.write_row + 1 {
-                if row == self.cursor_row { //beginning of text block
-                    for col in self.cursor_column..BUFFER_WIDTH {
-                        let character = self.buffer.chars[row][col].read();
-                        if col == 0 {
-                            self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
-                        } else {
-                            self.buffer.chars[row][col-1].write(character);
-                        }
+            if self.cursor_row == self.write_row { //if moving text is a one liner
+                let row = self.cursor_row;
+                for col in self.cursor_column..self.write_column + 1 { // +1 is so that the last
+                    let character = self.buffer.chars[row][col].read();// char isn't left behind
+                    if col == 0 {
+                        self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
+                    } else {
+                        self.buffer.chars[row][col-1].write(character);
                     }
                 }
-                else if row == self.write_row { // end of text block
-                    for col in 0..self.write_column {
-                        let character = self.buffer.chars[row][col].read();
-                        if col == 0 {
-                            self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
-
-                        } else {
-                            self.buffer.chars[row][col-1].write(character);
+            } else if self.write_column == 0 { //if we've just moved back to an old line
+                let row = self.cursor_row;
+                for col in self.cursor_column..BUFFER_WIDTH {
+                    let character = self.buffer.chars[row][col].read();
+                    self.buffer.chars[row][col-1].write(character);
+                }
+                self.buffer.chars[row][79].write( ScreenChar { //delete that last char on the row
+                    ascii_char: b' ', 
+                    color_code: self.color_code,
+                });
+                self.write_column = 80
+            } else { //if the moving text spans across multiple rows
+                for row in self.cursor_row..self.write_row + 1 {
+                    if row == self.write_row { // end of text block
+                        for col in 0..self.write_column + 1 { // +1: see line 107
+                            let character = self.buffer.chars[row][col].read();
+                            if col == 0 {
+                                self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
+                            } else {
+                                self.buffer.chars[row][col-1].write(character);
+                            }
                         }
+                    } else if row == self.cursor_row { //beginning of text block
+                        for col in self.cursor_column..BUFFER_WIDTH {
+                            let character = self.buffer.chars[row][col].read();
+                            if col == 0 {
+                                self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
+                            } else {
+                                self.buffer.chars[row][col-1].write(character);
+                            }
+                        }
+                    } else { //middle of text block
+                        for col in 0..BUFFER_WIDTH {
+                            let character = self.buffer.chars[row][col].read();
+                            if col == 0 {
+                                self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
+                            } else {
+                                self.buffer.chars[row][col-1].write(character);
+                            }
+                        } 
                     }
-                } else { //middle of text block
-                    for col in 0..BUFFER_WIDTH {
-                        let character = self.buffer.chars[row][col].read();
-                        if col == 0 {
-                            self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
-                        } else {
-                            self.buffer.chars[row][col-1].write(character);
-                        }
-                    } 
                 }
             }
         } else if direction == 1 {
@@ -141,7 +162,7 @@ impl Writer {
                 ascii_char: b' ',
                 color_code: self.color_code,
             });
-        } else {
+        } else { //because i will 100% make this mistake
             panic!("non binary value inputted into move_chars")
         }
     }

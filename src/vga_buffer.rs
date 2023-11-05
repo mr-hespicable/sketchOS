@@ -1,10 +1,8 @@
-use crate::{print, serial_println};
 use core::fmt::{Arguments, Result, Write};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
-use x86_64::instructions::interrupts;
-#[allow(dead_code)]
+use x86_64::instructions::interrupts::{self, without_interrupts}; #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Color {
@@ -24,6 +22,30 @@ pub enum Color {
     Pink = 13,
     Yellow = 14,
     White = 15,
+}
+
+impl From<u8> for Color {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => Color::Black,
+            1 => Color::Blue,
+            2 => Color::Green,
+            3 => Color::Cyan,
+            4 => Color::Red,
+            5 => Color::Magenta,
+            6 => Color::Brown,
+            7 => Color::LightGray,
+            8 => Color::DarkGray,
+            9 => Color::LightBlue,
+            10 => Color::LightGreen,
+            11 => Color::LightCyan,
+            12 => Color::LightRed,
+            13 => Color::Pink,
+            14 => Color::Yellow,
+            15 => Color::White,
+            _ => Color::Black, // Default to Black if the value is out of range
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -53,26 +75,36 @@ struct Buffer {
 
 //writer type
 pub struct Writer {
-    cursor_column: usize, //the position of the cursor (column-wise).
-    cursor_row: usize,    //the position of the row (row-wise).
+    cursor_column: usize,    //the position of the cursor (column-wise).
+    cursor_row: usize,       //the position of the row (row-wise).
     write_column: usize,     //the position of the text on the screen (column-wise).
     write_row: usize,        //the position of the text on the screen (row-wise).
-    color_code: ColorCode,
+    color_fg: Color,         //foreground color
+    color_bg: Color,         //background color
+    color_code: ColorCode,   //the colorcode
     buffer: &'static mut Buffer,
 }
 
 lazy_static! {
-    pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
-        cursor_column: 0,
-        cursor_row: 0,
-        write_column: 0,
-        write_row: 0,
-        color_code: ColorCode::new(Color::Yellow, Color::Black),
-        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
-    });
+    pub static ref WRITER: Mutex<Writer> = {
+        let color_fg = Color::Yellow; //set default value
+        let color_bg = Color::Black; //set default value
+
+        Mutex::new(Writer {
+            cursor_column: 0,
+            cursor_row: 0,
+            write_column: 0,
+            write_row: 0,
+            color_fg,
+            color_bg,
+            color_code: ColorCode::new(color_fg, color_bg),
+            buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
+        })
+    };
 }
 impl Writer {
     pub fn write_byte(&mut self, byte: u8) {
+        self.flip_char(self.cursor_row, self.cursor_column, 1);
         match byte {
             b'\n' => self.new_line(),
             byte => {
@@ -95,11 +127,13 @@ impl Writer {
                 });
                 self.cursor_column += 1;
                 self.write_column += 1;
+                self.flip_char(self.cursor_row, self.cursor_column, 0);
             }
         }
     }
 
-    pub fn move_chars(&mut self, direction: i32) {
+    pub fn move_chars(&mut self, direction: i32) { //called from another cursor move func, never
+                                                   //called directly
         //0 means move left, 1 means move right
         if direction == 0 {
             if self.cursor_row == self.write_row { //if moving text is a one liner
@@ -156,12 +190,17 @@ impl Writer {
                 }
             }
         } else if direction == 1 {
-            for row in (self.cursor_row..self.write_row + 1).rev() {
+            if self.cursor_row == self.write_row {
+                let row = self.cursor_row;
+                for col in (self.cursor_column..self.write_column).rev() {
+                    let character = self.buffer.chars[row][col].read();
+                    if col == BUFFER_WIDTH-1 {
+                        self.buffer.chars[row+1][0].write(character);
+                    } else {
+                        self.buffer.chars[row][col+1].write(character);
+                    }
+                }
             }
-            self.buffer.chars[self.write_row][self.write_column].write(ScreenChar {
-                ascii_char: b' ',
-                color_code: self.color_code,
-            });
         } else { //because i will 100% make this mistake
             panic!("non binary value inputted into move_chars")
         }
@@ -172,6 +211,8 @@ impl Writer {
         let col = self.cursor_column;
         let color_code = self.color_code;
 
+        self.flip_char(self.cursor_row, self.cursor_column, 1); //unflip cursor
+        
         if col == 0 {
             self.buffer.chars[row - 1][BUFFER_WIDTH - 1].write(ScreenChar {
                 ascii_char: b' ',
@@ -192,6 +233,7 @@ impl Writer {
                 self.write_column -= 1;
             }
 
+            self.flip_char(self.cursor_row, self.cursor_column, 0); //flip cursor
         } else {
             self.buffer.chars[row][col - 1].write(ScreenChar {
                 ascii_char: b' ',
@@ -204,6 +246,8 @@ impl Writer {
 
             self.cursor_column -= 1;
             self.write_column -= 1;
+
+            self.flip_char(self.cursor_row, self.cursor_column, 0); //flip cursor
         }
     }
 
@@ -248,15 +292,63 @@ impl Writer {
 
     pub fn move_cursor(&mut self, direction: i32) {
         // DO NOT CHANGE TEXT POSITION HERE
+        let row = self.cursor_row;
         let col = self.cursor_column;
+        //0 is left, 1 is right
+        if direction == 0 {
+            self.flip_char(self.cursor_row, self.cursor_column, 1); //unflip cursor
+            if col == 0 {
+                self.cursor_row -= 1;
+                self.cursor_column = BUFFER_WIDTH - 1;
+            } else {
+                self.cursor_column -= 1;
+            }
 
-        if direction == 0 && col > 0 {
-            self.cursor_column -= 1;
-        } else if direction == 0 && col == 0 {
-            self.cursor_row -= 1;
-            self.cursor_column = BUFFER_WIDTH - 1;
-        } else if direction == 1 && col < self.write_column {
-            self.cursor_column += 1;
+            self.flip_char(self.cursor_row, self.cursor_column, 0); //flip cursor
+        } else if direction == 1 {
+            self.flip_char(self.cursor_row, self.cursor_column, 1); //flip cursor
+            if col == BUFFER_WIDTH - 1 {
+                self.cursor_row += 1;
+                self.cursor_column = 0;
+            } else {
+                self.cursor_column += 1;
+            }
+            self.flip_char(self.cursor_row, self.cursor_column, 0); //flip cursor
+        }
+    }
+
+    pub fn flip_char(&mut self, raw_row: usize, raw_col: usize, direction: i32) {
+        //0 is inverted, 1 is normal
+        let mut row;
+        let mut  col;
+
+        if raw_row == 1000 && raw_col == 1000 {
+            row = self.cursor_row;
+            col = self.cursor_column;
+        } else {
+            row = raw_row;
+            col = raw_col;
+        }
+
+        if col >= BUFFER_WIDTH {
+            col -= BUFFER_WIDTH
+        }
+
+        let character = self.buffer.chars[row][col].read();
+
+        let fg = self.color_fg;
+        let bg = self.color_bg;
+
+        if direction == 1 {
+            self.buffer.chars[row][col].write(ScreenChar {
+                ascii_char: character.ascii_char,
+                color_code: ColorCode::new(fg, bg),
+            });
+        } else {
+            self.buffer.chars[row][col].write(ScreenChar {
+                ascii_char: character.ascii_char,
+                color_code: ColorCode::new(bg, fg),
+            });
         }
     }
 }
@@ -369,5 +461,13 @@ pub fn _move_chars_right() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
         writer.move_chars(1);
+    });
+}
+
+#[doc(hidden)]
+pub fn _flip_current(row: usize, col: usize) {
+    interrupts::without_interrupts(|| {
+        let mut writer = WRITER.lock();
+        writer.flip_char(row, col, 0);
     });
 }

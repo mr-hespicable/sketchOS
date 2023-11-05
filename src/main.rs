@@ -7,13 +7,16 @@
 
 use core::panic::PanicInfo;
 use sketch_os::{print, println};
+use sketch_os::vga_buffer::_flip_current;
 
 //don't mangle this function's name (basically, don' mess it up)
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     sketch_os::init(); //init idt
     
-    print!("1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEFhey");
+    print!("1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDE");
+    print!("Fhey");
+    _flip_current(1000, 1000);
 
     #[cfg(test)]
     test_main();

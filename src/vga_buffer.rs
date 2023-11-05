@@ -132,13 +132,12 @@ impl Writer {
         }
     }
 
-    pub fn move_chars(&mut self, direction: i32) { //called from another cursor move func, never
-                                                   //called directly
-        //0 means move left, 1 means move right
+    pub fn move_chars(&mut self, direction: i32) { //called from another cursor move func 
+        //0 means move left, 1 means move right    //never called directly
         if direction == 0 {
             if self.cursor_row == self.write_row { //if moving text is a one liner
                 let row = self.cursor_row;
-                for col in self.cursor_column..self.write_column + 1 { // +1 is so that the last
+                for col in self.cursor_column..=self.write_column { // +1 is so that the last
                     let character = self.buffer.chars[row][col].read();// char isn't left behind
                     if col == 0 {
                         self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
@@ -158,9 +157,9 @@ impl Writer {
                 });
                 self.write_column = 80
             } else { //if the moving text spans across multiple rows
-                for row in self.cursor_row..self.write_row + 1 {
+                for row in self.cursor_row..=self.write_row {
                     if row == self.write_row { // end of text block
-                        for col in 0..self.write_column + 1 { // +1: see line 107
+                        for col in 0..=self.write_column { // +1: see line 107
                             let character = self.buffer.chars[row][col].read();
                             if col == 0 {
                                 self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
@@ -196,8 +195,43 @@ impl Writer {
                     let character = self.buffer.chars[row][col].read();
                     if col == BUFFER_WIDTH-1 {
                         self.buffer.chars[row+1][0].write(character);
+                        self.write_row += 1;
+                        self.write_column = 0;
                     } else {
                         self.buffer.chars[row][col+1].write(character);
+                    }
+                }
+            } else { //moving text spans multiple rows
+                for row in (self.cursor_row..=self.write_row).rev() {
+                    if row == self.cursor_row { //beginning of block
+                        for col in (self.cursor_column..BUFFER_WIDTH).rev() {
+                            let character = self.buffer.chars[row][col].read();
+                            if col == BUFFER_WIDTH - 1 {
+                                self.buffer.chars[row+1][0].write(character);
+                            } else {
+                                self.buffer.chars[row][col+1].write(character);
+                            }
+                        }
+                    } else if row == self.write_row { //end of block
+                        for col in (0..=self.write_column).rev() {
+                            let character = self.buffer.chars[row][col].read();
+                            if col == BUFFER_WIDTH - 1 {
+                                self.buffer.chars[row+1][0].write(character);
+                                self.write_row += 1;
+                                self.write_column = 0;
+                            } else {
+                                self.buffer.chars[row][col+1].write(character);
+                            }
+                        }
+                    } else { //middle
+                        for col in (0..BUFFER_WIDTH).rev() {
+                            let character = self.buffer.chars[row][col].read();
+                            if col == 0 {
+                                self.buffer.chars[row+1][0].write(character);
+                            } else {
+                                self.buffer.chars[row][col+1].write(character);
+                            }
+                        }
                     }
                 }
             }
@@ -292,7 +326,6 @@ impl Writer {
 
     pub fn move_cursor(&mut self, direction: i32) {
         // DO NOT CHANGE TEXT POSITION HERE
-        let row = self.cursor_row;
         let col = self.cursor_column;
         //0 is left, 1 is right
         if direction == 0 {

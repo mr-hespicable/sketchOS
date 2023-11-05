@@ -15,8 +15,7 @@ pub extern "C" fn _start() -> ! {
     sketch_os::init(); //init idt
     
     print!("1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDE");
-    print!("Fhey");
-    _flip_current(1000, 1000);
+    _flip_current(1000, 1000); //draw cursor
 
     #[cfg(test)]
     test_main();

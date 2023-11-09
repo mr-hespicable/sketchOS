@@ -151,7 +151,7 @@ impl Writer {
                     let character = self.buffer.chars[row][col].read();
                     self.buffer.chars[row][col-1].write(character);
                 }
-                self.buffer.chars[row][79].write( ScreenChar { //delete that last char on the row
+                self.buffer.chars[row][79].write( ScreenChar { //delete the last char on the row
                     ascii_char: b' ', 
                     color_code: self.color_code,
                 });
@@ -286,8 +286,8 @@ impl Writer {
     }
 
     fn new_line(&mut self) {
-        if self.cursor_row + 2 > BUFFER_HEIGHT {
-            for row in 1..BUFFER_HEIGHT {
+        if self.cursor_row + 1 >= BUFFER_HEIGHT { //write every row from 1 to bottom up 1
+            for row in 1..BUFFER_HEIGHT { 
                 for col in 0..BUFFER_WIDTH {
                     let character = self.buffer.chars[row][col].read();
                     self.buffer.chars[row - 1][col].write(character);
@@ -330,6 +330,7 @@ impl Writer {
         //0 is left, 1 is right
         if direction == 0 {
             self.flip_char(self.cursor_row, self.cursor_column, 1); //unflip cursor
+            
             if col == 0 {
                 self.cursor_row -= 1;
                 self.cursor_column = BUFFER_WIDTH - 1;

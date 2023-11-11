@@ -1,19 +1,19 @@
-use core::str::{from_utf8, from_utf8_unchecked};
-
 use sketch_os::{print, println};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Prompt<'a>(&'a str);
-
-struct Buffer {
-    chars: [0u8, 256],
+#[derive(Debug)]
+struct Prompt<'a> {
+    user: &'a str,
+    machine: &'a str,
 }
 
-impl Prompt<'_> {
-    fn new<'a>(user: &'a str, machine: &'a str) -> Prompt<'a> {
-    let lit = user, machine;
-    
-        Prompt(final_prompt)
+impl<'a> Prompt<'a> {
+    fn new(user: &'a str, machine: &'a str) -> Prompt<'a> {
+
+        Prompt {
+            user, 
+            machine
+        }
+
     }
 }
 

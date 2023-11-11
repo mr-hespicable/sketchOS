@@ -1,0 +1,27 @@
+use sketch_os::{print, println};
+
+#[derive(Debug)]
+struct Prompt<'a>(&'a [u8]);
+
+impl Prompt<'_> {
+    fn new<'a>(user: &'a [u8], machine: &'a [u8]) -> Prompt<'a> {
+        const INITIAL_LENGTH: usize = 256;
+        let mut final_prompt = [0; INITIAL_LENGTH];
+
+        final_prompt[user.len()..].copy_from_slice(user);
+        final_prompt[..machine.len()].copy_from_slice(machine);
+
+        let final_one = &final_prompt[..INITIAL_LENGTH];
+
+        Prompt(
+    }
+}
+
+pub fn make_prompt(raw_user: &str, raw_machine: &str) {
+    let user = raw_user.as_bytes();
+    let machine = raw_machine.as_bytes();
+
+    let prompt = Prompt::new(user, machine);
+    println!("{:?}", prompt);
+}
+

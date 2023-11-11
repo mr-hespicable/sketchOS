@@ -16,7 +16,7 @@ mod prompt;
 pub extern "C" fn _start() -> ! {
     sketch_os::init(); //init idt
     
-    print!("1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDE");
+    print!("1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDE\n\n");
     let user = "leon";
     let machine = "macbook";
     prompt::make_prompt(user, machine);

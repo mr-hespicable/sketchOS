@@ -2,7 +2,7 @@ use core::fmt::{Arguments, Result, Write};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
-use x86_64::instructions::interrupts::{self, without_interrupts}; #[allow(dead_code)]
+use x86_64::instructions::interrupts::{self}; #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Color {
@@ -118,7 +118,6 @@ impl Writer {
                 if self.cursor_column != self.write_column {
                     self.move_chars(1);
                 }
-
                 let color_code = self.color_code;
 
                 self.buffer.chars[row][col].write(ScreenChar {
@@ -194,7 +193,7 @@ impl Writer {
                 for col in (self.cursor_column..self.write_column).rev() {
                     let character = self.buffer.chars[row][col].read();
                     if col == BUFFER_WIDTH-1 {
-                        self.buffer.chars[row+1][0].write(character);
+                        self.buffer.chars[&row+1][0].write(character);
                         self.write_row += 1;
                         self.write_column = 0;
                     } else {
@@ -293,14 +292,18 @@ impl Writer {
                     self.buffer.chars[row - 1][col].write(character);
                 }
             }
+            self.clear_row(BUFFER_HEIGHT - 1);
         } else {
-            self.cursor_row += 1;
-            self.write_row += 1;
+            if self.write_row <= self.cursor_row {
+                self.write_row += 1;
+            }
+            self.cursor_row += 1; //move cursor to next line
         }
-        self.clear_row(BUFFER_HEIGHT - 1);
 
-        self.cursor_column = 0;
-        self.write_column = 0;
+        self.cursor_column = 0; //put cursor at the beginning of this line
+        if self.write_column <= self.cursor_column { // if false, we are behind the write_column
+            self.write_column = 0;
+        }
     }
 
     fn clear_row(&mut self, row: usize) {

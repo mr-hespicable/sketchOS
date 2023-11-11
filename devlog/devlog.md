@@ -383,8 +383,9 @@ the implementation wasn't horrible
 i'm probably going to start working on a basic cli now.
 i'm thinking something like
 ```
-user@workspace> hey
+user@workspace>> hey
 ```
 and then when we add file management, i can actually set the values of user and workspace to something
 
-
+18:10
+kinda struggling with this lmao concatenating strings is tough when you don't have a std;

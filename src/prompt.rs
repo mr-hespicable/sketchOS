@@ -1,4 +1,4 @@
-//use sketch_os::{print, println};
+use sketch_os::{print, println};
 use core::str::from_utf8;
 
 #[derive(Debug)]
@@ -13,13 +13,19 @@ impl<'a> Prompt<'a> {
         let suffix_bytes: &[u8] = ">>".as_bytes();
         //@ = 64 as bytes
         //> = 62 as bytes
-        //should go user_bytes@machine_bytes>>
+        //goes `user_bytes@machine_bytes>>`
         prompt_array[..user_bytes.len()].copy_from_slice(user_bytes); //add username
-        prompt_array[user_bytes.len()..user_bytes.len()+1].copy_from_slice(separator_bytes); //add separator
-        prompt_array[user_bytes.len()+1..user_bytes.len()+machine_bytes.len()+1].copy_from_slice(machine_bytes); //add machine
-        prompt_array[user_bytes.len()+machine_bytes.len()+1..user_bytes.len()+machine_bytes.len()+suffix_bytes.len()+1].copy_from_slice(suffix_bytes);//add suffix
-        prompt_array
-        //Prompt(prompt_array)
+        prompt_array[
+            user_bytes.len()..user_bytes.len()+1
+        ].copy_from_slice(separator_bytes); //add separator
+        prompt_array[
+            user_bytes.len()+1..user_bytes.len()+machine_bytes.len()+1
+        ].copy_from_slice(machine_bytes); //add machine
+        prompt_array[
+            user_bytes.len()+machine_bytes.len()+1..user_bytes.len()+machine_bytes.len()+suffix_bytes.len()+1
+        ].copy_from_slice(suffix_bytes);//add suffix
+                                        
+        prompt_array //return prompt as [u8; 256]
     }
 }
 
@@ -28,8 +34,3 @@ pub fn make_prompt(user: &str, machine: &str) {
     let prompt_string = from_utf8(&prompt).unwrap();
     println!("{}", prompt_string);
 }
-
-fn main() {
-    make_prompt("leon", "portable_arch")
-}
-

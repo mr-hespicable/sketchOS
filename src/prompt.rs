@@ -1,8 +1,10 @@
-use sketch_os::{print, println};
+use sketch_os::print;
 use core::str::from_utf8;
 
 #[derive(Debug)]
-struct Prompt<'a>(&'a str);
+pub struct Prompt<'a>(&'a str);
+
+static mut PROMPT_LENGTH: u8 = 0;
 
 impl<'a> Prompt<'a> {
     fn new(user: &'a str, machine: &'a str) -> [u8; 256] {
@@ -13,7 +15,7 @@ impl<'a> Prompt<'a> {
         let suffix_bytes: &[u8] = ">>".as_bytes();
         //@ = 64 as bytes
         //> = 62 as bytes
-        //goes `user_bytes@machine_bytes>>`
+        //goes `user@machine>>`
         prompt_array[..user_bytes.len()].copy_from_slice(user_bytes); //add username
         prompt_array[
             user_bytes.len()..user_bytes.len()+1
@@ -29,8 +31,27 @@ impl<'a> Prompt<'a> {
     }
 }
 
-pub fn make_prompt(user: &str, machine: &str) {
-    let prompt = Prompt::new(user, machine);
-    let prompt_string = from_utf8(&prompt).unwrap();
-    println!("{}", prompt_string);
+pub fn draw_prompt(user: &str, machine: &str) {
+    let prompt_bytes = Prompt::new(user, machine);
+    let mut prompt_length: u8 = 0;
+
+    for byte in prompt_bytes {
+        match byte {
+            0 => continue,
+            _ => {
+                print!("{}", from_utf8(&[byte]).unwrap());
+                prompt_length += 1;
+            },
+        }
+    }
+    print!(" ");
+
+    unsafe { PROMPT_LENGTH = prompt_length };
+
+}
+
+pub fn safe_to_delete(start_row: usize, current_row: usize, col: usize) -> bool {
+    if start_row == current_row && col {
+
+    }
 }

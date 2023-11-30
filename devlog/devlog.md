@@ -349,7 +349,6 @@ else {
 }
 ```
 problem: write row shouldn't be incremented if it's greater than self.cursor_row => there's an offset.
-This can be illustrated here:
 
 fix: implement a check to see if write_row is > cursor row.   
 if false, increment.
@@ -389,3 +388,32 @@ and then when we add file management, i can actually set the values of user and 
 
 18:10
 kinda struggling with this lmao concatenating strings is tough when you don't have a std;
+
+2023-11-26
+22:37
+prompt works aok.  
+starting work now on making the prompt immune to deletion...  
+
+2023-11-27
+22:05
+working again on the safe delete thing in `prompt.rs`   
+i think i have a main idea on how i'm going to solve this problem:   
+- redo the entire vga_buffer thing
+maybe tomorrow...
+
+2023-11-29   
+22:27   
+
+ok it's late but i've made some notes on how i'm going to restructure `vga_buffer.rs`
+
+
+### functions needed
+- `write_string` (for `print` and `println`)
+- `clear_row` (for clearscreen)
+- `delete_byte` (for backspace)
+- `move_cursor` (for cursor movement)
+- `shift_screen` (for shifting the screen up or down)
+- `flip_cursor` (for drawing a cursor to the screen)
+- `move_chars` (for line movement)
+
+

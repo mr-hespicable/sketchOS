@@ -16,10 +16,15 @@ mod prompt;
 pub extern "C" fn _start() -> ! {
     sketch_os::init(); //init idt
     
-    print!("1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDE\n\n");
-    let user = "leon";
-    let machine = "macbook";
-    prompt::make_prompt(user, machine);
+    //print!("1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDE\n\n");
+    
+    let user = "user";
+    let machine = "workspace";
+    
+    prompt::draw_prompt(user, machine);
+
+    // println!("{:?}", proper_prompt);
+    // print!("{}", proper_prompt);
     _flip_current(1000, 1000); //draw cursor
 
     #[cfg(test)]
@@ -39,4 +44,3 @@ fn panic(info: &PanicInfo) -> ! {
 fn panic(info: &PanicInfo) -> ! {
     sketch_os::test_panic_handler(info)
 }
-

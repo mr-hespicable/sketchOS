@@ -416,4 +416,28 @@ ok it's late but i've made some notes on how i'm going to restructure `vga_buffe
 - `flip_cursor` (for drawing a cursor to the screen)
 - `move_chars` (for line movement)
 
+2023-11-30
+21:33
+
+shift screen notes
+```rust
+fn shift_screen(direction: Direction) {
+    /* DOWN */
+    for row in 1..BUF_H {
+        for col in 0..BUF_W {
+            char = buffer[row][col].read();
+            write char to [row-1][col];
+        }
+    }
+
+    /* UP */
+    for row in (0..BUF_H-1).rev() {
+        for col in 0..BUF_W {
+            char = buffer[row][col].read();
+            write char to [row+1][col];
+        }
+    }
+}
+```
+this is how i'm planning to implement this fn
 

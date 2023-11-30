@@ -3,6 +3,7 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
 use x86_64::instructions::interrupts::{self}; #[allow(dead_code)]
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Color {
@@ -115,9 +116,6 @@ impl Writer {
                     self.new_line();
                 }
 
-                let row = self.cursor_row;
-                let col = self.cursor_column;
-
                 if self.cursor_column != self.text_column {
                     //self.move_chars(1);
                 }
@@ -143,6 +141,11 @@ impl Writer {
         for i in 0..s.len() {
             let byte = s.bytes().nth(i).unwrap();
 
+            
+            if i % BUFFER_WIDTH == 0 {
+                self.write_byte(b'\n', self.cursor_row, self.cursor_column)
+            }
+
             match byte {
                 // printable ascii byte or newline
                 0x20..=0x7e | b'\n' => self.write_byte(byte, self.cursor_row, self.cursor_column),
@@ -151,20 +154,52 @@ impl Writer {
         }
     }
 
+
+    //new line
     fn new_line(&mut self) {
         let bottom_screen_index = BUFFER_HEIGHT - 1;
         match self.cursor_row {
             bottom_screen_index => self.shift_screen(Direction::Down),
             _ => {
+                self.cursor_row += 1;
+                self.cursor_column = 0;
+            }
+        }
+    }
 
+
+    /* SCREEN FUNCTIONS */ 
+    fn clear_screen(&mut self) {
+        for row in 0..BUFFER_HEIGHT {
+            for col in 0..BUFFER_WIDTH {
+                self.write_byte(b' ', row, col)
             }
         }
     }
 
     fn shift_screen(&mut self, direction: Direction) {
-        //TODO
+        match direction {
+            Direction::Up => {
+                for row in 1..BUFFER_HEIGHT {
+                    for col in 0..BUFFER_WIDTH {
+                        let char: ScreenChar = self.buffer.chars[row][col].read(); 
+                        self.buffer.chars[row-1][col].write(char);
+                    }
+                }
+            },
+            Direction::Down => {
+                for row in (0..BUFFER_HEIGHT-1).rev() {
+                    for col in 0..BUFFER_WIDTH {
+                        let char: ScreenChar = self.buffer.chars[row][col].read(); 
+                        self.buffer.chars[row+1][col].write(char);
+                    }
+                }
+            },
+            _ => panic!("can't put left or right here m8"),
+        }
     }
 
+    /* CURSOR FUNCTIONS*/
     fn move_cursor(&mut self, direction: Direction, iterations: usize) {
         //TODO
     }
@@ -172,7 +207,6 @@ impl Writer {
     fn draw_cursor(&mut self) {
         //TODO
     }
-
 
 
 }

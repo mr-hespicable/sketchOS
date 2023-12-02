@@ -441,3 +441,11 @@ fn shift_screen(direction: Direction) {
 ```
 this is how i'm planning to implement this fn
 
+2023-12-02
+20:42
+
+some more work, specifically on ```move_cursor()```
+
+for directions up and down, we want an if statement before to check if the cursor is at the very top/bottom, and to shift the screen if it is.  
+good thing i have a function for that :)
+

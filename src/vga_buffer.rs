@@ -2,14 +2,17 @@ use core::{fmt::{Arguments, Result, Write}, usize};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
-use x86_64::instructions::interrupts::{self}; #[allow(dead_code)]
+use x86_64::instructions::interrupts::{self}; 
 
+
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Color {
     Black = 0,
     Blue = 1,
-    Green = 2, Cyan = 3,
+    Green = 2, 
+    Cyan = 3,
     Red = 4,
     Magenta = 5,
     Brown = 6,
@@ -19,8 +22,8 @@ pub enum Color {
     LightGreen = 10,
     LightCyan = 11,
     LightRed = 12,
-    Pink = 13,
-    Yellow = 14,
+    Pink = 13, 
+    Yellow = 14, 
     White = 15,
 }
 
@@ -69,6 +72,7 @@ struct ScreenChar {
 const BUFFER_HEIGHT: usize = 25;
 const BUFFER_WIDTH: usize = 80;
 
+
 // buffer type
 struct Buffer {
     //screenchar repeated across width times, repeated down height times.
@@ -107,6 +111,7 @@ lazy_static! {
 }
 
 impl Writer {
+    /* WRiTING THINGS */
     pub fn write_byte(&mut self, byte: u8, row: usize, col: usize) {
         //self.flip_char(self.cursor_row, self.cursor_column, 1);
         match byte {
@@ -155,7 +160,7 @@ impl Writer {
     }
 
 
-    //new line
+    /* NEW LINE */
     fn new_line(&mut self) {
         let bottom_screen_index = BUFFER_HEIGHT - 1;
         match self.cursor_row {
@@ -175,6 +180,7 @@ impl Writer {
                 self.write_byte(b' ', row, col)
             }
         }
+        self.draw_prompt();
     }
 
     fn shift_screen(&mut self, direction: Direction) {
@@ -199,15 +205,53 @@ impl Writer {
         }
     }
 
+    fn move_chars(&mut self, direction: Direction) {
+        match direction {
+            Direction::Left => {
+
+            },
+            Direction::Right => {
+
+            },
+            _ => panic!("can't put up or down here m8"),
+        }
+    }
+
     /* CURSOR FUNCTIONS*/
     fn move_cursor(&mut self, direction: Direction, iterations: usize) {
-        //TODO
+        for iteration in 0..iterations {
+            match direction {
+                Direction::Up => {
+                    if self.cursor_row == 0 {
+                        self.shift_screen(Direction::Up);
+                    }
+                    self.cursor_row -= 1;
+                },
+                Direction::Down => {
+                    if self.cursor_row == BUFFER_HEIGHT-1 {
+                        self.shift_screen(Direction::Down);
+                    }
+                    self.cursor_row += 1;
+                },
+
+                Direction::Left => {},
+                Direction::Right => {},
+            }
+        }
     }
 
     fn draw_cursor(&mut self) {
         //TODO
     }
 
+    /* OTHERS */
+    fn draw_prompt(&mut self) {
+
+        let mut prompt_row: usize = 0;
+        let mut prompt_final_col: usize = 0;
+
+
+    }
 
 }
 
@@ -284,10 +328,7 @@ pub fn _print(args: Arguments) {
 pub fn _clear() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        for row in 0..BUFFER_HEIGHT {
-            writer.clear_row(row);
-        }
-        writer.cursor_column = 0;
+        // writer.clear_screen();
     });
 }
 
@@ -295,7 +336,7 @@ pub fn _clear() {
 pub fn _delete() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writer.delete_byte();
+        // writer.delete_byte();
     });
 }
 
@@ -303,7 +344,7 @@ pub fn _delete() {
 pub fn _move_cursor_left() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writer.move_cursor(0);
+        // writer.move_cursor(0);
     });
 }
 
@@ -311,7 +352,7 @@ pub fn _move_cursor_left() {
 pub fn _move_cursor_right() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writer.move_cursor(1);
+        // writer.move_cursor(1);
     });
 }
 
@@ -319,7 +360,7 @@ pub fn _move_cursor_right() {
 pub fn _move_chars_left() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writer.move_chars(0);
+        // writer.move_chars(0);
     });
 }
 
@@ -327,7 +368,7 @@ pub fn _move_chars_left() {
 pub fn _move_chars_right() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writer.move_chars(1);
+        // writer.move_chars(1);
     });
 }
 
@@ -335,6 +376,6 @@ pub fn _move_chars_right() {
 pub fn _flip_current(row: usize, col: usize) {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writer.flip_char(row, col, 0);
+        // writer.flip_char(row, col, 0);
     });
 }

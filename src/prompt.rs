@@ -4,11 +4,10 @@ use core::str::from_utf8;
 #[derive(Debug)]
 pub struct Prompt<'a>(&'a str);
 
-static mut PROMPT_LENGTH: u8 = 0;
+static mut PROMPT_LENGTH: usize = 0;
 
 impl<'a> Prompt<'a> {
-    fn new(user: &'a str, machine: &'a str) -> [u8; 256] {
-        let mut prompt_array: [u8; 256] = [0; 256];
+    fn new(user: &'a str, machine: &'a str) -> [u8; 256] { let mut prompt_array: [u8; 256] = [0; 256];
         let user_bytes: &[u8] = user.as_bytes(); //&[u8]
         let machine_bytes: &[u8] = machine.as_bytes(); //&[u8]
         let separator_bytes: &[u8] = "@".as_bytes();
@@ -33,7 +32,7 @@ impl<'a> Prompt<'a> {
 
 pub fn draw_prompt(user: &str, machine: &str) {
     let prompt_bytes = Prompt::new(user, machine);
-    let mut prompt_length: u8 = 0;
+    let mut prompt_length: usize = 0;
 
     for byte in prompt_bytes {
         match byte {
@@ -51,7 +50,12 @@ pub fn draw_prompt(user: &str, machine: &str) {
 }
 
 pub fn safe_to_delete(start_row: usize, current_row: usize, col: usize) -> bool {
-    if start_row == current_row && col {
-
+    unsafe {
+        if start_row == current_row && col <= PROMPT_LENGTH {
+            false
+        } else {
+            true
+        }
     }
 }
+

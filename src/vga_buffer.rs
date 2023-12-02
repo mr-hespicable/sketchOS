@@ -4,6 +4,7 @@ use spin::Mutex;
 use volatile::Volatile;
 use x86_64::instructions::interrupts::{self}; 
 
+use crate::prompt;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

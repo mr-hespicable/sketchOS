@@ -76,7 +76,7 @@ const BUFFER_WIDTH: usize = 80;
 
 // buffer type
 struct Buffer {
-    //screenchar repeated across width times, repeated down height times.
+    //screenchar repeated across BUFFER_WIDTH times, repeated down BUFFER_HEIGHT times.
     chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
@@ -84,8 +84,8 @@ struct Buffer {
 pub struct Writer {
     cursor_column: usize,    //the position of the cursor (column-wise).
     cursor_row: usize,       //the position of the row (row-wise).
-    text_column: usize,     //the position of the text on the screen (column-wise).
-    text_row: usize,        //the position of the text on the screen (row-wise).
+    text_column: usize,      //the position of the text on the screen (column-wise).
+    text_row: usize,         //the position of the text on the screen (row-wise).
     color_fg: Color,         //foreground color
     color_bg: Color,         //background color
     color_code: ColorCode,   //the colorcode
@@ -205,7 +205,9 @@ impl Writer {
             _ => panic!("can't put left or right here m8"),
         }
     }
+    /* END SCREEN FUNCTIONS */
 
+<<<<<<< Updated upstream
     fn move_chars(&mut self, direction: Direction) {
         match direction {
             Direction::Left => {
@@ -219,6 +221,9 @@ impl Writer {
     }
 
     /* CURSOR FUNCTIONS*/
+=======
+    /* CURSOR FUNCTIONS */
+>>>>>>> Stashed changes
     fn move_cursor(&mut self, direction: Direction, iterations: usize) {
         for iteration in 0..iterations {
             match direction {
@@ -244,6 +249,7 @@ impl Writer {
     fn draw_cursor(&mut self) {
         //TODO
     }
+    /* END CURSOR FUNCTIONS */
 
     /* OTHERS */
     fn draw_prompt(&mut self) {

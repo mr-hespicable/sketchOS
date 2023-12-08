@@ -205,13 +205,11 @@ impl Writer {
             _ => panic!("can't put left or right here m8"),
         }
     }
-    /* END SCREEN FUNCTIONS */
 
-<<<<<<< Updated upstream
     fn move_chars(&mut self, direction: Direction) {
         match direction {
             Direction::Left => {
-
+                
             },
             Direction::Right => {
 
@@ -220,10 +218,38 @@ impl Writer {
         }
     }
 
+    fn move_line(&mut self, direction: Direction, start_col_index: usize, end_col_index: usize) {
+        let row = self.cursor_row;
+
+        match direction {
+            Direction::Left => {
+                for col in start_col_index..end_col_index {
+                    let char = self.buffer.chars[row][col].read();
+
+                    match col {
+                        0 => self.buffer.chars[row-1][BUFFER_WIDTH-1].write(char);
+                        _ => self.buffer.chars[row][col-1].write(char);
+                    }
+                }
+            },
+            Direction::Right => {
+                for col in (start_col_index..end_col_index).rev() {
+                    let char = self.buffer.chars[row][col].read();
+
+                    let final_index = BUFFER_WIDTH-1;
+
+                    match col {
+                        final_index => self.buffer.chars[row+1][0].write(char);
+                        _ => self.buffer.chars[row][col+1].write(char);
+                    }
+                }
+            },
+            _ => panic!("can't put up or down here m8"),
+    }
+
+    /* END SCREEN FUNCTIONS */
+
     /* CURSOR FUNCTIONS*/
-=======
-    /* CURSOR FUNCTIONS */
->>>>>>> Stashed changes
     fn move_cursor(&mut self, direction: Direction, iterations: usize) {
         for iteration in 0..iterations {
             match direction {
@@ -259,6 +285,7 @@ impl Writer {
 
 
     }
+    /* END OTHERS */
 
 }
 

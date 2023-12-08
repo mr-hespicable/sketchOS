@@ -361,7 +361,7 @@ impl Writer {
     pub fn flip_char(&mut self, raw_row: usize, raw_col: usize, direction: i32) {
         //0 is inverted, 1 is normal
         let mut row;
-        let mut  col;
+        let mut col;
 
         if raw_row == 1000 && raw_col == 1000 {
             row = self.cursor_row;

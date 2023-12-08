@@ -96,7 +96,7 @@ pub struct Writer {
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = {
         let color_fg = Color::Yellow; //set default value
-        let color_bg = Color::Black; //set default value
+        let color_bg = Color::Black;  //set default value
     
         Mutex::new(Writer {
             cursor_column: 0,
@@ -209,23 +209,36 @@ impl Writer {
     fn move_chars(&mut self, direction: Direction) {
         match direction {
             Direction::Left => {
-                
+                for row in self.cursor_row..self.text_row {
+                    match row {
+                        self.cursor_row => move_line(Direction::Left, self.cursor_row, BUFFER_WIDTH-1),
+                        self.text_row =>   move_line(Direction::Left, 0, self.text_row),
+                        _ =>               move_line(Direction::Left, 0, BUFFER_WIDTH-1),
+
+                    }
+                }
             },
             Direction::Right => {
-
+                for row in (self.cursor_row..self.text_row).rev() {
+                    match row {
+                        self.cursor_row => move_line(Direction::Right, self.cursor_row, BUFFER_WIDTH-1),
+                        self.text_row =>   move_line(Direction::Right, 0, self.text_row),
+                        _ =>               move_line(Direction::Right, 0, BUFFER_WIDTH-1),
+                    }
+                }
             },
             _ => panic!("can't put up or down here m8"),
         }
     }
 
-    fn move_line(&mut self, direction: Direction, start_col_index: usize, end_col_index: usize) {
+    fn move_line(&mut self, direction: Direction, left_col_index: usize, right_col_index: usize) {
         let row = self.cursor_row;
 
         match direction {
             Direction::Left => {
-                for col in start_col_index..end_col_index {
+                for col in left_col_index..right_col_index {
                     let char = self.buffer.chars[row][col].read();
-
+                    
                     match col {
                         0 => self.buffer.chars[row-1][BUFFER_WIDTH-1].write(char);
                         _ => self.buffer.chars[row][col-1].write(char);
@@ -233,11 +246,10 @@ impl Writer {
                 }
             },
             Direction::Right => {
-                for col in (start_col_index..end_col_index).rev() {
+                for col in (left_col_index..right_col_index).rev() {
                     let char = self.buffer.chars[row][col].read();
 
                     let final_index = BUFFER_WIDTH-1;
-
                     match col {
                         final_index => self.buffer.chars[row+1][0].write(char);
                         _ => self.buffer.chars[row][col+1].write(char);
@@ -245,6 +257,7 @@ impl Writer {
                 }
             },
             _ => panic!("can't put up or down here m8"),
+        }
     }
 
     /* END SCREEN FUNCTIONS */
@@ -254,27 +267,28 @@ impl Writer {
         for iteration in 0..iterations {
             match direction {
                 Direction::Up => {
-                    if self.cursor_row == 0 {
-                        self.shift_screen(Direction::Up);
-                    }
+                    if self.cursor_row == 0 { self.shift_screen(Direction::Up) }
                     self.cursor_row -= 1;
                 },
                 Direction::Down => {
-                    if self.cursor_row == BUFFER_HEIGHT-1 {
-                        self.shift_screen(Direction::Down);
-                    }
+                    if self.cursor_row == BUFFER_HEIGHT-1 { self.shift_screen(Direction::Down) }
                     self.cursor_row += 1;
                 },
 
-                Direction::Left => {},
-                Direction::Right => {},
+                Direction::Left => { /*TODO*/ },
+                Direction::Right => { /*TODO*/ },
             }
         }
     }
 
     fn draw_cursor(&mut self) {
-        //TODO
+        let former_fg = self.color_fg;
+        let former_bg = self.color_bg;
+
+        self.color_fg = former_bg;
+        self.color_bg = former_fg;
     }
+    
     /* END CURSOR FUNCTIONS */
 
     /* OTHERS */
@@ -282,7 +296,6 @@ impl Writer {
 
         let mut prompt_row: usize = 0;
         let mut prompt_final_col: usize = 0;
-
 
     }
     /* END OTHERS */

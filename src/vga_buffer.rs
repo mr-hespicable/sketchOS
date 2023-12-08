@@ -106,7 +106,7 @@ lazy_static! {
             color_fg,
             color_bg,
             color_code: ColorCode::new(color_fg, color_bg),
-            buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
+            buffer: unsafe { &mut *(0xb8001 as *mut Buffer) },
         })
     };
 }
@@ -282,11 +282,29 @@ impl Writer {
     }
 
     fn draw_cursor(&mut self) {
-        let former_fg = self.color_fg;
-        let former_bg = self.color_bg;
+        // make all chars not highlighted
+        for row in 0..BUFFER_HEIGHT-1 {
+            for col in 0..BUFFER_WIDTH-1 {
+                let ascii_char = self.buffer.chars[row][col].read().ascii_char;
 
-        self.color_fg = former_bg;
-        self.color_bg = former_fg;
+                self.buffer.chars[row][col].write(ScreenChar {
+                    ascii_char,
+                    color_code: ColorCode::new(self.color_fg, self.color_bg),
+                });
+            }
+        }
+
+        // highlight current cursor position
+        let row = self.cursor_row;
+        let col = self.cursor_col;
+        
+        let ascii_char = self.buffer.chars[row][col].read().ascii_char;
+        
+        self.buffer.chars[row][col].write(ScreenChar {
+            ascii_char,
+            color_code: ColorCode::new(self.color_bg, self.color_fg),
+        });
+
     }
     
     /* END CURSOR FUNCTIONS */

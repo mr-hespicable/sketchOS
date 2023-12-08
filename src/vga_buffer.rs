@@ -245,6 +245,7 @@ impl Writer {
                     }
                 }
             },
+
             Direction::Right => {
                 for col in (left_col_index..right_col_index).rev() {
                     let char = self.buffer.chars[row][col].read();
@@ -275,8 +276,30 @@ impl Writer {
                     self.cursor_row += 1;
                 },
 
-                Direction::Left => { /*TODO*/ },
-                Direction::Right => { /*TODO*/ },
+                Direction::Left => {
+                    match self.cursor_col {
+                        0 => {
+                            move_cursor(Direction::Up, 1);
+                            self.cursor_col = BUFFER_WIDTH - 1;
+                        },
+                        _ => {
+                            self.cursor_col -= 1;
+                        }
+                    }
+                    
+                },
+                Direction::Right => { 
+                    let final_index = BUFFER_WIDTH-1;
+                    match self.cursor_col {
+                        final_index => {
+                            move_cursor(Direction:Down, 1);
+                            self.cursor_col = 0;
+                        },
+                        _ => {
+                            self.cursor_col += 1;
+                        }
+                    }
+                },
             }
         }
     }

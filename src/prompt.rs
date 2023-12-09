@@ -38,7 +38,9 @@ pub fn draw_prompt(user: &str, machine: &str) {
         match byte {
             0 => continue,
             _ => {
-                print!("{}", from_utf8(&[byte]).unwrap());
+                let borrowed = &[byte];
+                let test = from_utf8(borrowed).unwrap();
+                print!("{}", from_utf8(borrowed).unwrap());
                 prompt_length += 1;
             },
         }

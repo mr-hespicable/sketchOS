@@ -25,7 +25,7 @@ pub extern "C" fn _start() -> ! {
 
     // println!("{:?}", proper_prompt);
     // print!("{}", proper_prompt);
-    _flip_current(1000, 1000); //draw cursor
+    //_flip_current(1000, 1000); //draw cursor
 
     #[cfg(test)]
     test_main();

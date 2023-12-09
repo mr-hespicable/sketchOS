@@ -141,12 +141,11 @@ impl Writer {
     }
     
     pub fn write_string(&mut self, s: &str) {
-
         for i in 0..s.len() {
             let byte = s.bytes().nth(i).unwrap();
 
             
-            if i % BUFFER_WIDTH == 0 {
+            if i % 79 == 0 && i > 0 {
                 self.write_byte(b'\n', self.cursor_row, self.cursor_column)
             }
 

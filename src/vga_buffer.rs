@@ -205,13 +205,16 @@ impl Writer {
     }
 
     fn move_chars(&mut self, direction: Direction) {
+        let cursor_row = self.cursor_row;
+        let text_row = self.text_row;
+
         match direction {
             Direction::Left => {
                 for row in self.cursor_row..self.text_row {
                     match row {
-                        self.cursor_row => move_line(Direction::Left, self.cursor_row, BUFFER_WIDTH-1),
-                        self.text_row =>   move_line(Direction::Left, 0, self.text_row),
-                        _ =>               move_line(Direction::Left, 0, BUFFER_WIDTH-1),
+                        cursor_row => self.move_line(Direction::Left, self.cursor_row, BUFFER_WIDTH-1),
+                        text_row =>   self.move_line(Direction::Left, 0, self.text_row),
+                        _ =>          self.move_line(Direction::Left, 0, BUFFER_WIDTH-1),
 
                     }
                 }
@@ -219,9 +222,9 @@ impl Writer {
             Direction::Right => {
                 for row in (self.cursor_row..self.text_row).rev() {
                     match row {
-                        self.cursor_row => move_line(Direction::Right, self.cursor_row, BUFFER_WIDTH-1),
-                        self.text_row =>   move_line(Direction::Right, 0, self.text_row),
-                        _ =>               move_line(Direction::Right, 0, BUFFER_WIDTH-1),
+                        cursor_row => self.move_line(Direction::Right, self.cursor_row, BUFFER_WIDTH-1),
+                        text_row =>   self.move_line(Direction::Right, 0, self.text_row),
+                        _ =>          self.move_line(Direction::Right, 0, BUFFER_WIDTH-1),
                     }
                 }
             },
@@ -238,8 +241,8 @@ impl Writer {
                     let char = self.buffer.chars[row][col].read();
                     
                     match col {
-                        0 => self.buffer.chars[row-1][BUFFER_WIDTH-1].write(char);
-                        _ => self.buffer.chars[row][col-1].write(char);
+                        0 => self.buffer.chars[row-1][BUFFER_WIDTH-1].write(char),
+                        _ => self.buffer.chars[row][col-1].write(char),
                     }
                 }
             },
@@ -250,8 +253,8 @@ impl Writer {
 
                     let final_index = BUFFER_WIDTH-1;
                     match col {
-                        final_index => self.buffer.chars[row+1][0].write(char);
-                        _ => self.buffer.chars[row][col+1].write(char);
+                        final_index => self.buffer.chars[row+1][0].write(char),
+                        _ => self.buffer.chars[row][col+1].write(char),
                     }
                 }
             },
@@ -275,26 +278,26 @@ impl Writer {
                 },
 
                 Direction::Left => {
-                    match self.cursor_col {
+                    match self.cursor_column {
                         0 => {
-                            move_cursor(Direction::Up, 1);
-                            self.cursor_col = BUFFER_WIDTH - 1;
+                            self.move_cursor(Direction::Up, 1);
+                            self.cursor_column = BUFFER_WIDTH - 1;
                         },
                         _ => {
-                            self.cursor_col -= 1;
+                            self.cursor_column -= 1;
                         }
                     }
                     
                 },
                 Direction::Right => { 
                     let final_index = BUFFER_WIDTH-1;
-                    match self.cursor_col {
+                    match self.cursor_column {
                         final_index => {
-                            move_cursor(Direction:Down, 1);
-                            self.cursor_col = 0;
+                            self.move_cursor(Direction::Down, 1);
+                            self.cursor_column = 0;
                         },
                         _ => {
-                            self.cursor_col += 1;
+                            self.cursor_column += 1;
                         }
                     }
                 },
@@ -317,7 +320,7 @@ impl Writer {
 
         // highlight current cursor position
         let row = self.cursor_row;
-        let col = self.cursor_col;
+        let col = self.cursor_column;
         
         let ascii_char = self.buffer.chars[row][col].read().ascii_char;
         

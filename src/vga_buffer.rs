@@ -4,8 +4,6 @@ use spin::Mutex;
 use volatile::Volatile;
 use x86_64::instructions::interrupts::{self}; 
 
-use crate::prompt;
-
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -197,7 +195,7 @@ impl Writer {
             Direction::Down => {
                 for row in (0..BUFFER_HEIGHT-1).rev() {
                     for col in 0..BUFFER_WIDTH {
-                        let char: ScreenChar = self.buffer.chars[row][col].read(); 
+                        let char: ScreenChar = self.buffer.chars[row][col].read();
                         self.buffer.chars[row+1][col].write(char);
                     }
                 }

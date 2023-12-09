@@ -386,16 +386,16 @@ user@workspace>> hey
 ```
 and then when we add file management, i can actually set the values of user and workspace to something
 
-18:10
+18:10    
 kinda struggling with this lmao concatenating strings is tough when you don't have a std;
 
-2023-11-26
-22:37
+2023-11-26     
+22:37      
 prompt works aok.  
 starting work now on making the prompt immune to deletion...  
 
-2023-11-27
-22:05
+2023-11-27   
+22:05     
 working again on the safe delete thing in `prompt.rs`   
 i think i have a main idea on how i'm going to solve this problem:   
 - redo the entire vga_buffer thing
@@ -416,8 +416,8 @@ ok it's late but i've made some notes on how i'm going to restructure `vga_buffe
 - `flip_cursor` (for drawing a cursor to the screen)
 - `move_chars` (for line movement)
 
-2023-11-30
-21:33
+2023-11-30   
+21:33   
 
 shift screen notes
 ```rust
@@ -441,11 +441,28 @@ fn shift_screen(direction: Direction) {
 ```
 this is how i'm planning to implement this fn
 
-2023-12-02
-20:42
+2023-12-02   
+20:42   
 
 some more work, specifically on ```move_cursor()```
 
 for directions up and down, we want an if statement before to check if the cursor is at the very top/bottom, and to shift the screen if it is.  
 good thing i have a function for that :)
+
+2023-12-03   
+19:41   
+
+working on `move_chars()` now... the dreaded one :sob:   
+two directions: left and right. each one needs to match rows: beginning, middle, and end.       
+beginning going -> shifts chars from cursor to the end of the line, and the char at the end of the line to the next line.   
+middle going -> shifts all chars in the row one space to the right, and the char at the end of the line to the next line.  
+end going -> shifts all chars from the beginning of the row to the end of the text area.   
+
+we have to shift each character from the bottom up, so in theory we check end -> beginning -> middle    
+middle is checked last because it has the widest case.
+
+(going <- should just do all this but in reverse.)
+
+in each match statement, i'll set a variable declaring the end limit and the beginning limit. this is mostly for cleanliness and readability.
+
 

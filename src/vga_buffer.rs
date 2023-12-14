@@ -2,7 +2,9 @@ use core::{fmt::{Arguments, Result, Write}, usize};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
-use x86_64::instructions::interrupts::{self}; 
+use x86_64::instructions::interrupts::{self};
+
+use crate::interrupts; 
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -116,10 +118,6 @@ impl Writer {
         match byte {
             b'\n' => self.new_line(),
             byte => {
-                if self.cursor_column >= BUFFER_WIDTH {
-                    self.new_line();
-                }
-
                 if self.cursor_column != self.text_column {
                     //self.move_chars(1);
                 }
@@ -144,11 +142,10 @@ impl Writer {
         for i in 0..s.len() {
             let byte = s.bytes().nth(i).unwrap();
 
-            
-            if i % 79 == 0 && i > 0 {
+            if i % (BUFFER_WIDTH-1) == 0 /* TODO: add 0 stuff later */{
                 self.write_byte(b'\n', self.cursor_row, self.cursor_column)
             }
-
+            
             match byte {
                 // printable ascii byte or newline
                 0x20..=0x7e | b'\n' => self.write_byte(byte, self.cursor_row, self.cursor_column),
@@ -161,12 +158,11 @@ impl Writer {
     /* NEW LINE */
     fn new_line(&mut self) {
         let bottom_screen_index = BUFFER_HEIGHT - 1;
-        match self.cursor_row {
-            bottom_screen_index => self.shift_screen(Direction::Down),
-            _ => {
-                self.cursor_row += 1;
-                self.cursor_column = 0;
-            }
+        if self.cursor_row == bottom_screen_index {
+            self.shift_screen(Direction::Down)
+        } else {
+            self.cursor_row += 1;
+            self.cursor_column = 0;
         }
     }
 
@@ -210,21 +206,16 @@ impl Writer {
         match direction {
             Direction::Left => {
                 for row in self.cursor_row..self.text_row {
-                    match row {
-                        cursor_row => self.move_line(Direction::Left, self.cursor_row, BUFFER_WIDTH-1),
-                        text_row =>   self.move_line(Direction::Left, 0, self.text_row),
-                        _ =>          self.move_line(Direction::Left, 0, BUFFER_WIDTH-1),
-
-                    }
+                    if row == cursor_row    { self.move_line(Direction::Left, self.cursor_row, BUFFER_WIDTH-1) }
+                    else if row == text_row { self.move_line(Direction::Left, 0, self.text_row) }
+                    else                    { self.move_line(Direction::Left, 0, BUFFER_WIDTH-1) }
                 }
             },
             Direction::Right => {
                 for row in (self.cursor_row..self.text_row).rev() {
-                    match row {
-                        cursor_row => self.move_line(Direction::Right, self.cursor_row, BUFFER_WIDTH-1),
-                        text_row =>   self.move_line(Direction::Right, 0, self.text_row),
-                        _ =>          self.move_line(Direction::Right, 0, BUFFER_WIDTH-1),
-                    }
+                    if row == cursor_row    { self.move_line(Direction::Right, self.cursor_row, BUFFER_WIDTH-1) }
+                    else if row == text_row { self.move_line(Direction::Right, 0, self.text_row) }
+                    else                    { self.move_line(Direction::Right, 0, BUFFER_WIDTH-1) }
                 }
             },
             _ => panic!("can't put up or down here m8"),
@@ -290,14 +281,11 @@ impl Writer {
                 },
                 Direction::Right => { 
                     let final_index = BUFFER_WIDTH-1;
-                    match self.cursor_column {
-                        final_index => {
-                            self.move_cursor(Direction::Down, 1);
-                            self.cursor_column = 0;
-                        },
-                        _ => {
-                            self.cursor_column += 1;
-                        }
+                    if self.cursor_column == BUFFER_WIDTH-1 {
+                        self.move_cursor(Direction::Down, 1);
+                        self.cursor_column = 0;
+                    } else {
+                        self.cursor_column += 1;
                     }
                 },
             }
@@ -357,6 +345,16 @@ impl Write for Writer {
     }
 }
 
+impl WriteByte for Writer {
+    fn write_byte(&mut self/*, b:  TODO: byt type thing*/) {
+
+    }
+}
+
+trait WriteByte {
+    fn write_byte(/*byte: TODO: byt etype thing*/)
+}
+
 /***** MACROS *****/
 
 #[macro_export]
@@ -368,6 +366,11 @@ macro_rules! print {
 macro_rules! println {
     () => ($crate::print!("\n"));
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! print_byte {
+    ($($arg:tt)*) => ($crate::vga_buffer::_print_byte(format_args!($($arg)*)));
 }
 
 #[macro_export]
@@ -410,6 +413,13 @@ pub fn _print(args: Arguments) {
         //no interrupt can occur when writer is locked
         WRITER.lock().write_fmt(args).unwrap();
     });
+}
+
+#[doc(hidden)]
+pub fn _print_byte(args: Arguments) {
+    interrupts::without_interrupts(|| {
+        WRITER.lock().write_fmt(args).unwrap();
+    })
 }
 
 #[doc(hidden)]

@@ -23,9 +23,7 @@ pub extern "C" fn _start() -> ! {
     
     prompt::draw_prompt(user, machine);
 
-    // println!("{:?}", proper_prompt);
-    // print!("{}", proper_prompt);
-    //_flip_current(1000, 1000); //draw cursor
+    println!("\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0");
 
     #[cfg(test)]
     test_main();

@@ -1,10 +1,8 @@
 use core::{fmt::{Arguments, Result, Write}, usize};
+use x86_64::instructions::interrupts;
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
-use x86_64::instructions::interrupts::{self};
-
-use crate::interrupts; 
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -106,7 +104,7 @@ lazy_static! {
             color_fg,
             color_bg,
             color_code: ColorCode::new(color_fg, color_bg),
-            buffer: unsafe { &mut *(0xb8001 as *mut Buffer) },
+            buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
         })
     };
 }
@@ -140,16 +138,15 @@ impl Writer {
     
     pub fn write_string(&mut self, s: &str) {
         for i in 0..s.len() {
-            let byte = s.bytes().nth(i).unwrap();
-
-            if i % (BUFFER_WIDTH-1) == 0 /* TODO: add 0 stuff later */{
-                self.write_byte(b'\n', self.cursor_row, self.cursor_column)
-            }
-            
-            match byte {
-                // printable ascii byte or newline
-                0x20..=0x7e | b'\n' => self.write_byte(byte, self.cursor_row, self.cursor_column),
-                _ => self.write_byte(0xfe, self.cursor_row, self.cursor_column),
+            if self.cursor_column == BUFFER_WIDTH-1 {
+                self.write_byte(b'\n', self.cursor_row, self.cursor_column);
+            } else {
+                let byte = s.bytes().nth(i).unwrap();
+                match byte {
+                    // printable ascii byte or newline
+                    0x20..=0x7e | b'\n' => self.write_byte(byte, self.cursor_row, self.cursor_column),
+                    _ => self.write_byte(0xfe, self.cursor_row, self.cursor_column),
+                }
             }
         }
     }
@@ -345,15 +342,6 @@ impl Write for Writer {
     }
 }
 
-impl WriteByte for Writer {
-    fn write_byte(&mut self/*, b:  TODO: byt type thing*/) {
-
-    }
-}
-
-trait WriteByte {
-    fn write_byte(/*byte: TODO: byt etype thing*/)
-}
 
 /***** MACROS *****/
 

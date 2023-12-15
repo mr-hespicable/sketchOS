@@ -465,4 +465,7 @@ middle is checked last because it has the widest case.
 
 in each match statement, i'll set a variable declaring the end limit and the beginning limit. this is mostly for cleanliness and readability.
 
-
+2023-12-15
+01:41
+man... i realized all the problems i washaving with the display were bc i accidentally made the buffer start pointer `0xb8001` instead of `0xb8000` hahaha
+im very sad but at least its all really pretty now <3

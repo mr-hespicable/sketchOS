@@ -156,9 +156,7 @@ impl Writer {
     fn new_line(&mut self) {
         let bottom_screen_index = BUFFER_HEIGHT - 1;
         if self.cursor_row == bottom_screen_index {
-            self.shift_screen(Direction::Down);
-            self.clear_line(bottom_screen_index);
-            self.cursor_column = 0;
+            self.shift_screen(Direction::Down)
         } else {
             self.cursor_row += 1;
             self.cursor_column = 0;
@@ -167,22 +165,18 @@ impl Writer {
 
 
     /* SCREEN FUNCTIONS */ 
-    pub fn clear_screen(&mut self) {
+    fn clear_screen(&mut self) {
         for row in 0..BUFFER_HEIGHT {
-            self.clear_line(row);
+            for col in 0..BUFFER_WIDTH {
+                self.write_byte(b' ', row, col)
+            }
         }
         self.draw_prompt();
     }
 
-    fn clear_line(&mut self, row: usize) {
-        for col in 0..BUFFER_WIDTH {
-            self.write_byte(b' ', row, col)
-        }
-    }
-
     fn shift_screen(&mut self, direction: Direction) {
         match direction {
-            Direction::Down => {
+            Direction::Up => {
                 for row in 1..BUFFER_HEIGHT {
                     for col in 0..BUFFER_WIDTH {
                         let char: ScreenChar = self.buffer.chars[row][col].read(); 
@@ -190,7 +184,7 @@ impl Writer {
                     }
                 }
             },
-            Direction::Up => {
+            Direction::Down => {
                 for row in (0..BUFFER_HEIGHT-1).rev() {
                     for col in 0..BUFFER_WIDTH {
                         let char: ScreenChar = self.buffer.chars[row][col].read();

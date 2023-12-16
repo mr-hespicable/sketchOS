@@ -138,16 +138,16 @@ impl Writer {
     
     pub fn write_string(&mut self, s: &str) {
         for i in 0..s.len() {
-            if self.cursor_column == BUFFER_WIDTH-1 {
-                self.write_byte(b'\n', self.cursor_row, self.cursor_column);
-            } else {
-                let byte = s.bytes().nth(i).unwrap();
-                match byte {
-                    // printable ascii byte or newline
-                    0x20..=0x7e | b'\n' => self.write_byte(byte, self.cursor_row, self.cursor_column),
-                    _ => self.write_byte(0xfe, self.cursor_row, self.cursor_column),
-                }
+            let byte = s.bytes().nth(i).unwrap();
+            match byte {
+                // printable ascii byte or newline
+                0x20..=0x7e | b'\n' => self.write_byte(byte, self.cursor_row, self.cursor_column),
+                _ => self.write_byte(0xfe, self.cursor_row, self.cursor_column),
             }
+
+            if self.cursor_column == BUFFER_WIDTH {
+                self.write_byte(b'\n', self.cursor_row, self.cursor_column);
+            } 
         }
     }
 
@@ -176,7 +176,7 @@ impl Writer {
 
     fn clear_line(&mut self, row: usize) {
         for col in 0..BUFFER_WIDTH {
-            self.write_byte(b' ', row, col)
+            self.buffer.chars[row][col].write(ScreenChar { ascii_char: b' ', color_code: self.color_code });
         }
     }
 
@@ -209,16 +209,18 @@ impl Writer {
         match direction {
             Direction::Left => {
                 for row in self.cursor_row..self.text_row {
-                    if row == cursor_row    { self.move_line(Direction::Left, self.cursor_row, BUFFER_WIDTH-1) }
-                    else if row == text_row { self.move_line(Direction::Left, 0, self.text_row) }
-                    else                    { self.move_line(Direction::Left, 0, BUFFER_WIDTH-1) }
+                    if cursor_row == text_row { self.move_line(Direction::Left, self.cursor_column, self.text_column) } // moving text spans 1 row
+                    else if row == cursor_row { self.move_line(Direction::Left, self.cursor_column, BUFFER_WIDTH-1) }   // beginning of block of text
+                    else if row == text_row   { self.move_line(Direction::Left, 0,                  self.text_column) } // end of block of text
+                    else                      { self.move_line(Direction::Left, 0,                  BUFFER_WIDTH-1) }   // middle of block of text
                 }
             },
             Direction::Right => {
                 for row in (self.cursor_row..self.text_row).rev() {
-                    if row == cursor_row    { self.move_line(Direction::Right, self.cursor_row, BUFFER_WIDTH-1) }
-                    else if row == text_row { self.move_line(Direction::Right, 0, self.text_row) }
-                    else                    { self.move_line(Direction::Right, 0, BUFFER_WIDTH-1) }
+                    if cursor_row == text_row { self.move_line(Direction::Right, self.cursor_column, self.text_column) }// moving text spans 1 row
+                    else if row == cursor_row { self.move_line(Direction::Right, self.cursor_column, BUFFER_WIDTH-1) }  // beginning of block of text
+                    else if row == text_row   { self.move_line(Direction::Right, 0,                  self.text_column) }// end of block of text
+                    else                      { self.move_line(Direction::Right, 0,                  BUFFER_WIDTH-1) }  // middle of block of text
                 }
             },
             _ => panic!("can't put up or down here m8"),
@@ -239,7 +241,6 @@ impl Writer {
                     }
                 }
             },
-
             Direction::Right => {
                 for col in (left_col_index..right_col_index).rev() {
                     let char = self.buffer.chars[row][col].read();

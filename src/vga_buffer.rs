@@ -112,9 +112,10 @@ lazy_static! {
 impl Writer {
     /* WRiTING THINGS */
     pub fn write_byte(&mut self, byte: u8, row: usize, col: usize) {
-        //self.flip_char(self.cursor_row, self.cursor_column, 1);
         match byte {
-            b'\n' => self.new_line(),
+            b'\n' => {
+                self.new_line();
+            },
             byte => {
                 if self.cursor_column != self.text_column {
                     //self.move_chars(1);
@@ -128,10 +129,6 @@ impl Writer {
                 });
 
                 self.move_cursor(Direction::Right, 1);
-
-                //self.cursor_column += 1;
-                //self.text_column += 1;
-                //self.flip_char(self.cursor_row, self.cursor_column, 0);
             }
         }
     }
@@ -255,6 +252,26 @@ impl Writer {
             _ => panic!("can't put up or down here m8"),
         }
     }
+
+    fn delete_byte(&mut self) {
+        match self.cursor_column {
+            0 => {
+                self.buffer.chars[self.cursor_row-1][BUFFER_WIDTH-1].write(ScreenChar {
+                    ascii_char: b' ', color_code: self.color_code
+                });
+            }
+            _ => {
+                self.buffer.chars[self.cursor_row][self.cursor_column-1].write(ScreenChar {
+                    ascii_char: b' ', color_code: self.color_code
+                });
+            }
+        }
+        self.move_cursor(Direction::Left, 1);
+    }
+
+    // fn delete_byte(&mut self, row: usize, col: usize) { TODO: find a way for this to work
+        // self.buffer.chars[row][col].write(ScreenChar{ ascii_char: b' ', color_code: self.color_code });
+    // }
 
     /* END SCREEN FUNCTIONS */
 
@@ -429,7 +446,7 @@ pub fn _clear() {
 pub fn _delete() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        // writer.delete_byte();
+        writer.delete_byte();
     });
 }
 

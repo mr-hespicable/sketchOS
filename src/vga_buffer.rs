@@ -1,4 +1,4 @@
-use core::{fmt::{Arguments, Result, Write}, usize};
+use core::{fmt::{Arguments, Result, Write}, usize, };
 use x86_64::instructions::interrupts;
 use lazy_static::lazy_static;
 use spin::Mutex;
@@ -129,6 +129,7 @@ impl Writer {
                 });
 
                 self.move_cursor(Direction::Right, 1);
+                self.move_text(Direction::Right);
             }
         }
     }
@@ -186,6 +187,7 @@ impl Writer {
                         self.buffer.chars[row-1][col].write(char);
                     }
                 }
+                self.text_row -= 1;
             },
             Direction::Up => {
                 for row in (0..BUFFER_HEIGHT-1).rev() {
@@ -194,6 +196,7 @@ impl Writer {
                         self.buffer.chars[row+1][col].write(char);
                     }
                 }
+                self.text_row += 1;
             },
             _ => panic!("can't put left or right here m8"),
         }
@@ -267,11 +270,31 @@ impl Writer {
             }
         }
         self.move_cursor(Direction::Left, 1);
+        self.move_text(Direction::Left);
     }
 
-    // fn delete_byte(&mut self, row: usize, col: usize) { TODO: find a way for this to work
-        // self.buffer.chars[row][col].write(ScreenChar{ ascii_char: b' ', color_code: self.color_code });
-    // }
+    fn move_text(&mut self, direction: Direction) {
+        match direction {
+            Direction::Left => {
+                match self.text_column {
+                    0 => {
+                        self.text_row -= 1;
+                        self.text_column = BUFFER_WIDTH-1;
+                    },
+                    _ => self.text_column -= 1,
+                }
+            },
+            Direction::Right => {
+                if self.text_column == BUFFER_WIDTH-1 {
+                    self.text_row += 1;
+                    self.text_column = 0;
+                } else {
+                    self.text_column += 1;
+                }
+            }
+            _ => panic!("can't put that as a direction... you put {:?} which doesn't make sense (i hope)", direction),
+        }
+    }
 
     /* END SCREEN FUNCTIONS */
 
@@ -301,7 +324,6 @@ impl Writer {
                     
                 },
                 Direction::Right => { 
-                    let final_index = BUFFER_WIDTH-1;
                     if self.cursor_column == BUFFER_WIDTH-1 {
                         self.move_cursor(Direction::Down, 1);
                         self.cursor_column = 0;
@@ -352,6 +374,7 @@ impl Writer {
 
 }
 
+#[derive(Debug)]
 enum Direction {
     Up,
     Down,

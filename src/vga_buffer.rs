@@ -115,6 +115,7 @@ impl Writer {
         match byte {
             b'\n' => {
                 self.new_line();
+                self.move_text(Direction::Right, true);
             },
             byte => {
                 if self.cursor_column != self.text_column {
@@ -129,7 +130,7 @@ impl Writer {
                 });
 
                 self.move_cursor(Direction::Right, 1);
-                self.move_text(Direction::Right);
+                self.move_text(Direction::Right, false);
             }
         }
     }
@@ -270,10 +271,11 @@ impl Writer {
             }
         }
         self.move_cursor(Direction::Left, 1);
-        self.move_text(Direction::Left);
+        self.move_text(Direction::Left, false);
     }
 
-    fn move_text(&mut self, direction: Direction) {
+    fn move_text(&mut self, direction: Direction, newline_check: bool) {
+
         match direction {
             Direction::Left => {
                 match self.text_column {
@@ -293,6 +295,10 @@ impl Writer {
                 }
             }
             _ => panic!("can't put that as a direction... you put {:?} which doesn't make sense (i hope)", direction),
+        }
+
+        match newline_check {
+
         }
     }
 

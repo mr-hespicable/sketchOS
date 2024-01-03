@@ -275,7 +275,9 @@ impl Writer {
     }
 
     fn move_text(&mut self, direction: Direction, newline_check: bool) {
-
+        /*
+        *   For the movement of self.text_[column, row].
+        */
         match direction {
             Direction::Left => {
                 match self.text_column {
@@ -297,10 +299,10 @@ impl Writer {
             _ => panic!("can't put that as a direction... you put {:?} which doesn't make sense (i hope)", direction),
         }
 
-        // match newline_check {
-            // true =>
-            // false =>
-        // }
+        match newline_check {
+            true => self.text_row += 1,
+            false => {},
+        }
     }
 
     /* END SCREEN FUNCTIONS */

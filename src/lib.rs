@@ -27,7 +27,6 @@ where
     }
 }
 
-//don't mangle this function's name (basically, don' fuck it up)
 
 pub fn test_runner(tests: &[&dyn Testable]) {
     serial_println!("Running {} tests", tests.len());
@@ -47,7 +46,8 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
 }
 
 #[cfg(test)]
-#[no_mangle]
+#[no_mangle] //don't mangle this function's name (basically, don' fuck it up)
+
 pub extern "C" fn _start() -> ! {
     //entry point for 'cargo test'
     init(); //init idt

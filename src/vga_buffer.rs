@@ -297,9 +297,10 @@ impl Writer {
             _ => panic!("can't put that as a direction... you put {:?} which doesn't make sense (i hope)", direction),
         }
 
-        match newline_check {
-
-        }
+        // match newline_check {
+            // true =>
+            // false =>
+        // }
     }
 
     /* END SCREEN FUNCTIONS */
@@ -483,7 +484,7 @@ pub fn _delete() {
 pub fn _move_cursor_left() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        // writer.move_cursor(0);
+        writer.move_cursor(Direction::Left, 1);
     });
 }
 
@@ -491,7 +492,7 @@ pub fn _move_cursor_left() {
 pub fn _move_cursor_right() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        // writer.move_cursor(1);
+        writer.move_cursor(Direction::Right, 1);
     });
 }
 
@@ -508,13 +509,5 @@ pub fn _move_chars_right() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
         // writer.move_chars(1);
-    });
-}
-
-#[doc(hidden)]
-pub fn _flip_current(row: usize, col: usize) {
-    interrupts::without_interrupts(|| {
-        let mut writer = WRITER.lock();
-        // writer.flip_char(row, col, 0);
     });
 }

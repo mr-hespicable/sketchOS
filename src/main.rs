@@ -7,7 +7,6 @@
 
 use core::panic::PanicInfo;
 use sketch_os::{print, println};
-use sketch_os::vga_buffer::_flip_current;
 
 mod prompt;
 

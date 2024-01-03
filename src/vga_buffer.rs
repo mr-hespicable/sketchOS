@@ -301,7 +301,7 @@ impl Writer {
 
         match newline_check {
             true => self.text_row += 1,
-            false => {},
+            _ => {},
         }
     }
 

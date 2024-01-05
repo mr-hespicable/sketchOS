@@ -463,9 +463,27 @@ middle is checked last because it has the widest case.
 
 (going <- should just do all this but in reverse.)
 
-in each match statement, i'll set a variable declaring the end limit and the beginning limit. this is mostly for cleanliness and readability.
+in each match statement, i'll set a variable declaring the end limit and the beginning limit. this is mostly for cleanliness and readability. 
+[update 2024-01-03]
+bad idea haha because match statements can't use variables (stupid stupid stupid) so 'if' statements it is
 
 2023-12-15
 01:41
 man... i realized all the problems i washaving with the display were bc i accidentally made the buffer start pointer `0xb8001` instead of `0xb8000` hahaha
 im very sad but at least its all really pretty now <3
+
+2024-01-03
+13:28
+i took a break but now im back and better than ever         
+move chars works, arrow keys work (left and right that is)          
+now i need to figure out how to make a universal custom enum (the "direction enum"), shown here:
+```rust
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right
+}
+```
+basically, i need to make it a public enum and i don't know how to do that. unfortunately, i'm on a plane (no internet sob)         
+so i have no way to figure out how to do that (note to self: download rust documentation onto computer)

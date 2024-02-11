@@ -119,7 +119,7 @@ impl Writer {
             },
             byte => {
                 if self.cursor_column != self.text_column {
-                    //self.move_chars(1);
+                    // TODO: figure out how to move chars
                 }
 
                 let color_code = self.color_code;
@@ -384,7 +384,7 @@ impl Writer {
 }
 
 #[derive(Debug)]
-enum Direction {
+pub enum Direction {
     Up,
     Down,
     Left,
@@ -417,6 +417,7 @@ macro_rules! print_byte {
     ($($arg:tt)*) => ($crate::vga_buffer::_print_byte(format_args!($($arg)*)));
 }
 
+        
 #[macro_export]
 macro_rules! clear {
     () => {

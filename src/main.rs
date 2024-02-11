@@ -22,7 +22,7 @@ pub extern "C" fn _start() -> ! {
     
     prompt::draw_prompt(user, machine);
 
-    println!("\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0");
+    // println!("\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0");
 
     #[cfg(test)]
     test_main();

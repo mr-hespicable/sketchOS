@@ -168,8 +168,7 @@ impl Writer {
     /* SCREEN FUNCTIONS */ 
     pub fn clear_screen(&mut self) {
         for row in 0..BUFFER_HEIGHT {
-            self.clear_line(row);
-        }
+            self.clear_line(row); }
         self.draw_prompt();
     }
 
@@ -373,11 +372,14 @@ impl Writer {
     /* END CURSOR FUNCTIONS */
 
     /* OTHERS */
-    fn draw_prompt(&mut self) {
+    pub fn draw_prompt(&mut self, length: usize) -> bool {
 
         let mut prompt_row: usize = 0;
         let mut prompt_final_col: usize = 0;
 
+        use crate::prompt;
+
+        prompt::safe_to_delete(0, self.cursor_row, self.cursor_column, length)
     }
     /* END OTHERS */
 
@@ -452,6 +454,23 @@ macro_rules! move_chars {
     };
 }
 
+#[macro_export]
+macro_rules! draw_prompt {
+    ($val:expr) => {
+        $crate::vga_buffer::_draw_prompt($val);
+    };
+}
+
+
+
+/*
+* --------------------------
+* HIDDEN FNS: DO NOT TOUCH
+* --------------------------
+*/
+
+
+
 #[doc(hidden)]
 pub fn _print(args: Arguments) {
     interrupts::without_interrupts(|| {
@@ -513,4 +532,12 @@ pub fn _move_chars_right() {
         let mut writer = WRITER.lock();
         // writer.move_chars(1);
     });
+}
+
+#[doc(hidden)]
+pub fn _draw_prompt(length: usize) {
+    interrupts::without_interrupts(|| {
+        let mut writer = WRITER.lock();
+        writer.draw_prompt(length);
+    })
 }

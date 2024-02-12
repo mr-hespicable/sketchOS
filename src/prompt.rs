@@ -1,10 +1,8 @@
-use sketch_os::print;
+use crate::print;
 use core::str::from_utf8;
 
 #[derive(Debug)]
 pub struct Prompt<'a>(&'a str);
-
-static mut PROMPT_LENGTH: usize = 0;
 
 impl<'a> Prompt<'a> {
     fn new(user: &'a str, machine: &'a str) -> [u8; 256] { let mut prompt_array: [u8; 256] = [0; 256];
@@ -30,7 +28,7 @@ impl<'a> Prompt<'a> {
     }
 }
 
-pub fn draw_prompt(user: &str, machine: &str) {
+pub fn draw_prompt(user: &str, machine: &str) -> usize {
     let prompt_bytes = Prompt::new(user, machine);
     let mut prompt_length: usize = 0;
 
@@ -47,13 +45,13 @@ pub fn draw_prompt(user: &str, machine: &str) {
     }
     print!(" ");
 
-    unsafe { PROMPT_LENGTH = prompt_length };
+    prompt_length
 
 }
 
-pub fn safe_to_delete(start_row: usize, current_row: usize, col: usize) -> bool {
+pub fn safe_to_delete(start_row: usize, current_row: usize, col: usize, prompt_length: usize) -> bool {
     unsafe {
-        if start_row == current_row && col <= PROMPT_LENGTH {
+        if start_row == current_row && col <= prompt_length {
             false
         } else {
             true

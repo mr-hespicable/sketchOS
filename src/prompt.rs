@@ -5,7 +5,9 @@ use core::str::from_utf8;
 pub struct Prompt<'a>(&'a str);
 
 impl<'a> Prompt<'a> {
-    fn new(user: &'a str, machine: &'a str) -> [u8; 256] { let mut prompt_array: [u8; 256] = [0; 256];
+    pub fn new(user: &'a str, machine: &'a str) -> [u8; 256] { 
+        let mut prompt_array: [u8; 256] = [0; 256];
+
         let user_bytes: &[u8] = user.as_bytes(); //&[u8]
         let machine_bytes: &[u8] = machine.as_bytes(); //&[u8]
         let separator_bytes: &[u8] = "@".as_bytes();

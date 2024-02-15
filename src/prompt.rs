@@ -49,9 +49,9 @@ pub fn draw_prompt(user: &str, machine: &str) -> usize {
 
 }
 
-pub fn safe_to_delete(start_row: usize, current_row: usize, col: usize, prompt_length: usize) -> bool {
+pub fn safe_to_delete(start_row: usize, current_row: usize, col: usize) -> bool {
     unsafe {
-        if start_row == current_row && col <= prompt_length {
+        if start_row == current_row /*&& col <= prompt_length*/ {
             false
         } else {
             true

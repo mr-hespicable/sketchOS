@@ -372,14 +372,14 @@ impl Writer {
     /* END CURSOR FUNCTIONS */
 
     /* OTHERS */
-    pub fn draw_prompt(&mut self, length: usize) -> bool {
+    pub fn draw_prompt(&mut self) {
 
         let mut prompt_row: usize = 0;
         let mut prompt_final_col: usize = 0;
 
         use crate::prompt;
 
-        prompt::safe_to_delete(0, self.cursor_row, self.cursor_column, length)
+        prompt::draw_prompt("user", "machine");
     }
     /* END OTHERS */
 
@@ -456,8 +456,8 @@ macro_rules! move_chars {
 
 #[macro_export]
 macro_rules! draw_prompt {
-    ($val:expr) => {
-        $crate::vga_buffer::_draw_prompt($val);
+    () => {
+        $crate::vga_buffer::_draw_prompt();
     };
 }
 
@@ -535,9 +535,9 @@ pub fn _move_chars_right() {
 }
 
 #[doc(hidden)]
-pub fn _draw_prompt(length: usize) {
+pub fn _draw_prompt() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writer.draw_prompt(length);
+        writer.draw_prompt();
     })
 }

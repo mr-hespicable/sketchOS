@@ -6,6 +6,7 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
+use prompt::draw_prompt;
 use sketch_os::{draw_prompt, print, println, vga_buffer};
 
 mod prompt;
@@ -20,8 +21,7 @@ pub extern "C" fn _start() -> ! {
     let user = "user";
     let machine = "workspace";
     
-    prompt::draw_prompt("user", "machine");
-    let item = draw_prompt!();
+    draw_prompt!();
 
     // println!("\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0");
 

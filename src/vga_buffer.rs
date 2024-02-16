@@ -167,6 +167,9 @@ impl Writer {
 
     /* SCREEN FUNCTIONS */ 
     pub fn clear_screen(&mut self) {
+        
+
+
         for row in 0..BUFFER_HEIGHT {
             self.clear_line(row); }
         self.draw_prompt();
@@ -361,18 +364,6 @@ impl Writer {
         let col = self.cursor_column;
         
         let ascii_char = self.buffer.chars[row][col].read().ascii_char;
-        
-        self.buffer.chars[row][col].write(ScreenChar {
-            ascii_char,
-            color_code: ColorCode::new(self.color_bg, self.color_fg),
-        });
-
-    }
-    
-    /* END CURSOR FUNCTIONS */
-
-    /* OTHERS */
-    pub fn draw_prompt(&mut self) {
 
         let mut prompt_row: usize = 0;
         let mut prompt_final_col: usize = 0;
@@ -380,21 +371,24 @@ impl Writer {
         use crate::prompt;
         use core::str::from_utf8;
 
-        let prompt_array: [u8; 256] = prompt::Prompt::new("user", "machine");
+        let prompt_array: [u8; 256] = prompt::Prompt::new(user, machine);
         
         let mut prompt_length: usize = 0;
 
         for byte in prompt_array {
             match byte {
-                0 => continue,
+                b'0' => continue,
                 _ => {
                     self.write_byte(byte, self.cursor_row, self.cursor_column);
                     prompt_length += 1;
                 },
             }
+
+            self.write_byte(b' ', self.cursor_row, self.cursor_column);
+            prompt_length += 1;
         }
- 
     }
+
     /* END OTHERS */
 
 }

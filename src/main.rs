@@ -11,16 +11,19 @@ use sketch_os::{draw_prompt, print, println, vga_buffer};
 mod prompt;
 
 //don't mangle this function's name (basically, don' mess it up)
+
+static mut USER: str = "user";
+static mut MACHINE: str = "machine";
+
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+
+
     sketch_os::init(); //init idt
     
     //print!("1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDE\n\n");
     
-    let user = "user";
-    let machine = "workspace";
-    
-    draw_prompt!();
+    draw_prompt!(USER, MACHINE);
 
     // println!("\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0");
 

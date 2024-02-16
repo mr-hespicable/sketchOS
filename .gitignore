@@ -22,10 +22,10 @@ Cargo.lock
 
 # already existing elements were commented out
 
-#other gitignore files
-*/.DS_Store
-.DS_Store
-devlog/.obsidian/
+# other gitignore files
+**/.DS_Store
+**/.gdb_history
+
 
 
 # Added by cargo

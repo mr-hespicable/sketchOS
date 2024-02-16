@@ -377,7 +377,7 @@ impl Writer {
         let mut prompt_row: usize = 0;
         let mut prompt_final_col: usize = 0;
 
-        use crate::{prompt, print};
+        use crate::prompt;
         use core::str::from_utf8;
 
         let prompt_array: [u8; 256] = prompt::Prompt::new("user", "machine");
@@ -388,9 +388,7 @@ impl Writer {
             match byte {
                 0 => continue,
                 _ => {
-                    let borrowed = &[byte];
-                    let test = from_utf8(borrowed).unwrap();
-                    print!("{}", from_utf8(borrowed).unwrap());
+                    self.write_byte(byte, self.cursor_row, self.cursor_column);
                     prompt_length += 1;
                 },
             }

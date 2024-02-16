@@ -6,7 +6,6 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
-use prompt::draw_prompt;
 use sketch_os::{draw_prompt, print, println, vga_buffer};
 
 mod prompt;

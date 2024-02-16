@@ -30,27 +30,6 @@ impl<'a> Prompt<'a> {
     }
 }
 
-pub fn draw_prompt(user: &str, machine: &str) -> usize {
-    let prompt_bytes = Prompt::new(user, machine);
-    let mut prompt_length: usize = 0;
-
-    for byte in prompt_bytes {
-        match byte {
-            0 => continue,
-            _ => {
-                let borrowed = &[byte];
-                let test = from_utf8(borrowed).unwrap();
-                print!("{}", from_utf8(borrowed).unwrap());
-                prompt_length += 1;
-            },
-        }
-    }
-    print!(" ");
-
-    prompt_length
-
-}
-
 pub fn safe_to_delete(start_row: usize, current_row: usize, col: usize) -> bool {
     unsafe {
         if start_row == current_row /*&& col <= prompt_length*/ {

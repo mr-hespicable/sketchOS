@@ -6,7 +6,7 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
-use sketch_os::{draw_prompt, print, println, vga_buffer};
+use sketch_os::{draw_prompt, print, println};
 
 use lazy_static::lazy_static;
 use spin::Mutex;
@@ -17,11 +17,11 @@ mod prompt;
 //don't mangle this function's name (basically, don' mess it up)
 
 lazy_static! {
-    pub static ref USER: Mutex<&str> = Mutex::new("user");
+    pub static ref USER: Mutex<&'static str> = Mutex::new("user");
 }
 
 lazy_static! {
-    pub static ref MACHINE: Mutex<&str> = Mutex::new("machine");
+    pub static ref MACHINE: Mutex<&'static str> = Mutex::new("machine");
 }
 
 
@@ -33,7 +33,7 @@ pub extern "C" fn _start() -> ! {
     
     //print!("1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDE\n\n");
     
-    draw_prompt!(USER, MACHINE);
+    draw_prompt!(&*USER.lock(), &*MACHINE.lock());
 
     // println!("\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0");
 

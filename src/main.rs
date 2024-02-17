@@ -8,12 +8,22 @@
 use core::panic::PanicInfo;
 use sketch_os::{draw_prompt, print, println, vga_buffer};
 
+use lazy_static::lazy_static;
+use spin::Mutex;
+
+
 mod prompt;
 
 //don't mangle this function's name (basically, don' mess it up)
 
-static mut USER: str = "user";
-static mut MACHINE: str = "machine";
+lazy_static! {
+    pub static ref USER: Mutex<&str> = Mutex::new("user");
+}
+
+lazy_static! {
+    pub static ref MACHINE: Mutex<&str> = Mutex::new("machine");
+}
+
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {

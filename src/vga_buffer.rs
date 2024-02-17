@@ -1,4 +1,4 @@
-use core::{fmt::{Arguments, Result, Write}, usize, };
+use core::{fmt::{Arguments, Result, Write}, usize};
 use x86_64::instructions::interrupts;
 use lazy_static::lazy_static;
 use spin::Mutex;
@@ -167,12 +167,9 @@ impl Writer {
 
     /* SCREEN FUNCTIONS */ 
     pub fn clear_screen(&mut self) {
-        
-
-
         for row in 0..BUFFER_HEIGHT {
             self.clear_line(row); }
-        self.draw_prompt();
+        self.draw_prompt("clear -> user", "machine");
     }
 
     fn clear_line(&mut self, row: usize) {
@@ -364,6 +361,17 @@ impl Writer {
         let col = self.cursor_column;
         
         let ascii_char = self.buffer.chars[row][col].read().ascii_char;
+        
+        self.buffer.chars[row][col].write(ScreenChar {
+            ascii_char,
+            color_code: ColorCode::new(self.color_bg, self.color_fg),
+        });
+
+    }
+    /* END CURSOR FUNCTIONS */
+
+    /* OTHERS */
+    pub fn draw_prompt(&mut self, user: &str, machine: &str) {
 
         let mut prompt_row: usize = 0;
         let mut prompt_final_col: usize = 0;
@@ -464,8 +472,8 @@ macro_rules! move_chars {
 
 #[macro_export]
 macro_rules! draw_prompt {
-    () => {
-        $crate::vga_buffer::_draw_prompt();
+    ($user:expr, $machine:expr) => {
+        $crate::vga_buffer::_draw_prompt($user, $machine);
     };
 }
 
@@ -543,9 +551,9 @@ pub fn _move_chars_right() {
 }
 
 #[doc(hidden)]
-pub fn _draw_prompt() {
+pub fn _draw_prompt(user: &str, machine: &str) {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writer.draw_prompt();
+        writer.draw_prompt(user, machine);
     })
 }

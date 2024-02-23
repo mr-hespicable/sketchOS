@@ -144,10 +144,6 @@ impl Writer {
                 0x20..=0x7e | b'\n' => self.write_byte(byte, self.cursor_row, self.cursor_column),
                 _ => self.write_byte(0xfe, self.cursor_row, self.cursor_column),
             }
-
-            if self.cursor_column == BUFFER_WIDTH {
-                self.write_byte(b'\n', self.cursor_row, self.cursor_column);
-            }
         }
     }
 
@@ -282,22 +278,34 @@ impl Writer {
     }
 
     fn delete_byte(&mut self) {
-        match self.cursor_column {
-            0 => {
-                self.buffer.chars[self.cursor_row - 1][BUFFER_WIDTH - 1].write(ScreenChar {
-                    ascii_char: b' ',
-                    color_code: self.color_code,
-                });
+        if self.safe_to_delete() {
+            match self.cursor_column {
+                0 => {
+                    self.buffer.chars[self.cursor_row - 1][BUFFER_WIDTH - 1].write(ScreenChar {
+                        ascii_char: b' ',
+                        color_code: self.color_code,
+                    });
+                }
+                _ => {
+                    self.buffer.chars[self.cursor_row][self.cursor_column - 1].write(ScreenChar {
+                        ascii_char: b' ',
+                        color_code: self.color_code,
+                    });
+                }
             }
-            _ => {
-                self.buffer.chars[self.cursor_row][self.cursor_column - 1].write(ScreenChar {
-                    ascii_char: b' ',
-                    color_code: self.color_code,
-                });
-            }
+            self.move_cursor(Direction::Left, 1);
+            self.move_text(Direction::Left, false);
         }
-        self.move_cursor(Direction::Left, 1);
-        self.move_text(Direction::Left, false);
+    }
+
+    fn safe_to_delete(&mut self) -> bool {
+        let prompt_length = *crate::PROMPT_LENGTH.lock();
+        let prompt_row = *crate::PROMPT_ROW.lock();
+        if self.cursor_column <= prompt_length && self.cursor_row == prompt_row {
+            false
+        } else {
+            true
+        }
     }
 
     fn move_text(&mut self, direction: Direction, newline_check: bool) {
@@ -370,6 +378,7 @@ impl Writer {
                 }
             }
         }
+        self.draw_cursor();
     }
 
     fn draw_cursor(&mut self) {
@@ -400,14 +409,10 @@ impl Writer {
 
     /* OTHERS */
     pub fn draw_prompt(&mut self, user: &str, machine: &str) {
-        let mut prompt_row: usize = 0;
-        let mut prompt_final_col: usize = 0;
+        let prompt_row: usize = self.cursor_row;
+        *crate::PROMPT_ROW.lock() = prompt_row;
 
-        use crate::prompt;
-
-        use core::str::from_utf8;
-
-        let prompt_array: [u8; 256] = prompt::Prompt::new(user, machine);
+        let prompt_array: [u8; 256] = crate::prompt::Prompt::new(user, machine);
 
         let mut prompt_length: usize = 0;
 
@@ -422,6 +427,8 @@ impl Writer {
         }
         self.write_byte(b' ', self.cursor_row, self.cursor_column);
         prompt_length += 1;
+
+        *crate::PROMPT_LENGTH.lock() = prompt_length;
     }
 
     /* END OTHERS */
@@ -510,7 +517,6 @@ macro_rules! draw_prompt {
 #[doc(hidden)]
 pub fn _print(args: Arguments) {
     interrupts::without_interrupts(|| {
-        //no interrupt can occur when writer is locked
         WRITER.lock().write_fmt(args).unwrap();
     });
 }

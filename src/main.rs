@@ -5,42 +5,47 @@
 #![test_runner(sketch_os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use sketch_os::{draw_prompt, print, println};
+use sketch_os::{draw_prompt, memory::active_level_4_table, println, MACHINE, USER};
+use x86_64::{registers::control::Cr3, structures::paging::PageTable, VirtAddr};
 
-use lazy_static::lazy_static;
-use spin::Mutex;
-
-
-mod prompt;
-
-//don't mangle this function's name (basically, don' mess it up)
-
-lazy_static! {
-    pub static ref USER: Mutex<&'static str> = Mutex::new("user");
-}
-
-lazy_static! {
-    pub static ref MACHINE: Mutex<&'static str> = Mutex::new("machine");
-}
-
-
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
-
-
+entry_point!(kernal_main);
+fn kernal_main(boot_info: &'static BootInfo) -> ! {
     sketch_os::init(); //init idt
-    
-    //print!("1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDE\n\n");
-    
-    draw_prompt!(&*USER.lock(), &*MACHINE.lock());
 
-    // println!("\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0");
+    let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
+    let l4_table = unsafe { active_level_4_table(phys_mem_offset) };
+
+    for (i, entry) in l4_table.iter().enumerate() {
+        if !entry.is_unused() {
+            println!("L4 entry {}: {:?}", i, entry);
+
+            // get the physical address from the entry and convert it
+            let phys = entry.frame().unwrap().start_address();
+            let virt = phys.as_u64() + boot_info.physical_memory_offset;
+            let ptr = VirtAddr::new(virt).as_mut_ptr();
+            let l3_table: &PageTable = unsafe { &*ptr };
+
+            // print non-empty entries of the level 3 table
+            for (i, entry) in l3_table.iter().enumerate() {
+                if !entry.is_unused() {
+                    println!("    L3 Entry {}: {:?}", i, entry);
+                }
+            }
+        }
+    }
+    //draw_prompt!(&*USER.lock(), &*MACHINE.lock());
+
+    println!();
 
     #[cfg(test)]
     test_main();
+
+    println!("it did not crash!");
     sketch_os::hlt_loop();
 }
+
 //call this on panic
 #[cfg(not(test))]
 #[panic_handler]

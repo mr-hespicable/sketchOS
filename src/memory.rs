@@ -1,9 +1,21 @@
+use std::io::Empty;
+
 use x86_64::{
-    structures::paging::{frame, Page, PageTable},
-    PhysAddr, VirtAddr,
+    structures::paging::{frame, OffsetPageTable, Page, PageTable, PhysFrame, Mapper, Size4KiB, FrameAllocator},
+    PhysAddr, 
+    VirtAddr,
 };
 
-pub unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static mut PageTable {
+pub struct EmptyFrameAllocator;
+
+unsafe impl FrameAllocator<Size4KiB> for EmptyFrameAllocator {
+    fn allocate_frame(&mut self) -> Option<PhysFrame<Size4KiB>> {
+        None
+    }
+}
+
+
+unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static mut PageTable {
     use x86_64::registers::control::Cr3;
 
     let (level_4_table, _) = Cr3::read(); //read lvl 4 reg 'CR3'
@@ -15,40 +27,28 @@ pub unsafe fn active_level_4_table(physical_memory_offset: VirtAddr) -> &'static
     &mut *page_table_ptr //unsafe creation of page_table_ptr reference
 }
 
-pub unsafe fn translate_addr(addr: VirtAddr, physical_memory_offset: VirtAddr) -> Option<PhysAddr> {
-    translate_addr_inner(addr, physical_memory_offset)
+/// This fn is unsafe bc caller must ensure all of the physical memory is  
+/// mapped to virtual memory at the passed `physical_memory_offset` '.
+pub unsafe fn init(physical_memory_offset: VirtAddr) -> OffsetPageTable<'static> { //can only be called once
+    let level_4_table = active_level_4_table(physical_memory_offset);
+    OffsetPageTable::new(level_4_table, physical_memory_offset)
+
 }
 
-fn translate_addr_inner(addr: VirtAddr, physical_memory_offset: VirtAddr) -> Option<PhysAddr> {
-    use x86_64::registers::control::Cr3;
-    use x86_64::structures::paging::page_table::FrameError;
+pub fn create_example_mapping(
+    page: Page,
+    mapper: &mut OffsetPageTable,
+    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
+) {
+    use x86_64::structures::paging::PageTableFlags as Flags;
 
-    let (level_4_table_frame, _) = Cr3::read(); //read lvl 4 reg 'CR3'
+    let frame = PhysFrame::containing_address(PhysAddr::new(0xb8000));
+    let flags = Flags::PRESENT | Flags::WRITABLE;
 
-    let table_indexes = [
-        addr.p4_index(),
-        addr.p3_index(),
-        addr.p2_index(),
-        addr.p1_index(),
-    ];
+    let map_to_result = unsafe { // because caller must ensure the frame is not already in use
+        //FIXME: unsafe operation (remove!)
+        mapper.map_to(page, frame, flags, frame_allocator)
+    };
 
-    let mut frame = level_4_table_frame; //remember last physical frame
-
-    //traverse the page tables
-    for &index in &table_indexes {
-        let virt = physical_memory_offset + frame.start_address().as_u64();
-        let table_ptr: *const PageTable = virt.as_ptr();
-        let table = unsafe { &*table_ptr };
-
-        //read entry and update frame var
-        let entry = &table[index];
-
-        frame = match entry.frame() {
-            Ok(frame) => frame,
-            Err(FrameError::FrameNotPresent) => return None,
-            Err(FrameError::HugeFrame) => panic!("huge pages not supported"),
-        }
-    }
-    //calculate & return physical address
-    Some(frame.start_address() + u64::from(addr.page_offset()))
+    map_to_result.expect("map_to failed").flush();
 }

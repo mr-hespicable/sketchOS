@@ -9,16 +9,23 @@ use bootloader::{entry_point, BootInfo};
 use core::{mem::transmute, panic::PanicInfo};
 use sketch_os::{
     draw_prompt,
-    memory::{active_level_4_table, translate_addr},
+    memory::{self},
     println, MACHINE, USER,
 };
-use x86_64::{registers::control::Cr3, structures::paging::PageTable, VirtAddr};
+use x86_64::{
+    registers::control::Cr3, 
+    structures::paging::{
+        PageTable, 
+        Translate,
+    }, 
+    VirtAddr};
 
 entry_point!(kernal_main);
 fn kernal_main(boot_info: &'static BootInfo) -> ! {
     sketch_os::init(); //init idt
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
+    let mapper = unsafe { memory::init(phys_mem_offset) };
 
     let addresses = [
         0xb8000,
@@ -29,7 +36,7 @@ fn kernal_main(boot_info: &'static BootInfo) -> ! {
 
     for &address in &addresses {
         let virt = VirtAddr::new(address);
-        let phys = unsafe { translate_addr(virt, phys_mem_offset) };
+        let phys = mapper.translate_addr(virt);
         println!(" {:?} -> {:?} ", virt, phys);
     }
     //draw_prompt!(&*USER.lock(), &*MACHINE.lock());

@@ -9,36 +9,29 @@ use bootloader::{entry_point, BootInfo};
 use core::{mem::transmute, panic::PanicInfo};
 use sketch_os::{
     draw_prompt,
-    memory::{self},
+    memory::{self, BootInfoFrameAllocator},
     println, MACHINE, USER,
 };
 use x86_64::{
-    registers::control::Cr3, 
-    structures::paging::{
-        PageTable, 
-        Translate,
-    }, 
-    VirtAddr};
+    registers::control::Cr3,
+    structures::paging::{Page, PageTable, Translate},
+    VirtAddr,
+};
 
 entry_point!(kernal_main);
 fn kernal_main(boot_info: &'static BootInfo) -> ! {
     sketch_os::init(); //init idt
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
-    let mapper = unsafe { memory::init(phys_mem_offset) };
+    let mut mapper = unsafe { memory::init(phys_mem_offset) };
+    let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&boot_info.memory_map) };
 
-    let addresses = [
-        0xb8000,
-        0x201008,
-        0x0100_0020_1a10,
-        boot_info.physical_memory_offset,
-    ];
+    let page = Page::containing_address(VirtAddr::new(0xdeadbeef00));
 
-    for &address in &addresses {
-        let virt = VirtAddr::new(address);
-        let phys = mapper.translate_addr(virt);
-        println!(" {:?} -> {:?} ", virt, phys);
-    }
+    let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
+
+    unsafe { page_ptr.offset(1).write_volatile(0x_f621_f077_f065_f04e) }
+
     //draw_prompt!(&*USER.lock(), &*MACHINE.lock());
 
     println!();

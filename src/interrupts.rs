@@ -1,13 +1,11 @@
-use crate::{backspace, gdt, move_cursor, print, println};
-use core::fmt::Write;
+use crate::{backspace, draw_prompt, gdt, hlt_loop, move_cursor, print, println};
 use lazy_static::lazy_static;
 use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 use pic8259::ChainedPics;
 use spin::Mutex;
 use x86_64::instructions::port::Port;
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
-
-use crate::vga_buffer::{Writer, WRITER};
+use x86_64::registers::control::Cr2;
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
@@ -41,6 +39,7 @@ lazy_static! { //set idt table
             idt.double_fault.set_handler_fn(handler_double_fault)
                 .set_stack_index(gdt::DOUBLE_FAULT_IST_INDEX);
         }
+        idt.page_fault.set_handler_fn(handler_page_fault);
         idt[InterruptIndex::Timer.as_usize()]
             .set_handler_fn(handler_interrupt_timer);
 
@@ -55,11 +54,22 @@ lazy_static! { //set idt table
 
 pub fn init_idt() {
     //init idt
-    IDT.load(); //loads lazy static
+    IDT.load();
 }
 extern "x86-interrupt" fn handler_breakpoint(stack_frame: InterruptStackFrame) {
     //breakpoint handle
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
+}
+
+extern "x86-interrupt" fn handler_page_fault(
+    stack_frame: InterruptStackFrame,
+    error_code: PageFaultErrorCode,
+) {
+    println!("EXCEPTION: PAGE FAULT");
+    println!("Accessed Address: {:?}", Cr2::read());
+    println!("Error Code: {:?}", error_code);
+    println!("{:#?}", stack_frame);
+    hlt_loop()
 }
 
 extern "x86-interrupt" fn handler_double_fault(
@@ -96,14 +106,21 @@ extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStac
                     if scancode == 14 {
                         //backspace
                         backspace!();
+                    } else if scancode == 28 {
+                        print!("{}", character);
+                        let user = *crate::USER.lock();
+                        let machine = *crate::MACHINE.lock();
+                        draw_prompt!(user, machine);
                     } else {
                         print!("{}", character);
                     }
                 }
                 DecodedKey::RawKey(key) => {
                     if scancode == 75 {
+                        //left arrow
                         move_cursor!(0);
                     } else if scancode == 77 {
+                        //right arrow
                         move_cursor!(1);
                     } else {
                         print!("{:?}", key);

@@ -6,6 +6,18 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
+use lazy_static::lazy_static;
+use spin::Mutex;
+
+#[cfg(test)]
+use bootloader::{entry_point, BootInfo};
+
+lazy_static! {
+    pub static ref USER: Mutex<&'static str> = Mutex::new("user");
+    pub static ref MACHINE: Mutex<&'static str> = Mutex::new("machine");
+    pub static ref PROMPT_LENGTH: Mutex<usize> = Mutex::new(0);
+    pub static ref PROMPT_ROW: Mutex<usize> = Mutex::new(0);
+}
 
 use bootloader::{entry_point, BootInfo};
 
@@ -55,8 +67,8 @@ entry_point!(test_kernal_main);
 fn test_kernal_main(_boot_info: &'static BootInfo) -> ! {
     //entry point for 'cargo test'
     init(); //init idt
-    test_main(); //call test
-    hlt_loop();
+    test_main(); //call tests
+    hlt_loop(); //hang
 }
 
 #[cfg(test)]

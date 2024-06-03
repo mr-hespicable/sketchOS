@@ -36,8 +36,11 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
 
     #[cfg(test)]
     test_main();
+
+    println!("it did not crash!");
     sketch_os::hlt_loop();
 }
+
 //call this on panic
 #[cfg(not(test))]
 #[panic_handler]

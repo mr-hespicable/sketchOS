@@ -1,11 +1,12 @@
-use crate::{backspace, draw_prompt, gdt, hlt_loop, move_cursor, print, println};
+use crate::{backspace, draw_prompt, gdt, move_cursor, print, println};
 use lazy_static::lazy_static;
 use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
+
 use pic8259::ChainedPics;
 use spin::Mutex;
 use x86_64::instructions::port::Port;
 use x86_64::registers::control::Cr2;
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
@@ -108,9 +109,11 @@ extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStac
                         backspace!();
                     } else if scancode == 28 {
                         print!("{}", character);
-                        let user = *crate::USER.lock();
-                        let machine = *crate::MACHINE.lock();
-                        draw_prompt!(user, machine);
+                        //TODO: get this stuff working
+
+                        //let user = *crate::USER.lock();
+                        //let machine = *crate::MACHINE.lock();
+                        //draw_prompt!(user, machine);
                     } else {
                         print!("{}", character);
                     }

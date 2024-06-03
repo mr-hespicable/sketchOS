@@ -5,21 +5,18 @@
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 use lazy_static::lazy_static;
 use spin::Mutex;
 
 #[cfg(test)]
-use bootloader::{entry_point, BootInfo};
-
 lazy_static! {
     pub static ref USER: Mutex<&'static str> = Mutex::new("user");
     pub static ref MACHINE: Mutex<&'static str> = Mutex::new("machine");
     pub static ref PROMPT_LENGTH: Mutex<usize> = Mutex::new(0);
     pub static ref PROMPT_ROW: Mutex<usize> = Mutex::new(0);
 }
-
-use bootloader::{entry_point, BootInfo};
 
 pub mod gdt;
 pub mod interrupts;

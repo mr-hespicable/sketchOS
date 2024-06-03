@@ -299,6 +299,9 @@ impl Writer {
     }
 
     fn safe_to_delete(&mut self) -> bool {
+        //TODO: make this all work
+
+        /*
         let prompt_length = *crate::PROMPT_LENGTH.lock();
         let prompt_row = *crate::PROMPT_ROW.lock();
         if self.cursor_column <= prompt_length && self.cursor_row == prompt_row {
@@ -306,6 +309,8 @@ impl Writer {
         } else {
             true
         }
+        */
+        true
     }
 
     fn move_text(&mut self, direction: Direction, newline_check: bool) {
@@ -410,7 +415,7 @@ impl Writer {
     /* OTHERS */
     pub fn draw_prompt(&mut self, user: &str, machine: &str) {
         let prompt_row: usize = self.cursor_row;
-        *crate::PROMPT_ROW.lock() = prompt_row;
+        //crate::PROMPT_ROW.lock() = prompt_row;
 
         let prompt_array: [u8; 256] = crate::prompt::Prompt::new(user, machine);
 
@@ -428,7 +433,7 @@ impl Writer {
         self.write_byte(b' ', self.cursor_row, self.cursor_column);
         prompt_length += 1;
 
-        *crate::PROMPT_LENGTH.lock() = prompt_length;
+        //*crate::PROMPT_LENGTH.lock() = prompt_length;
     }
 
     /* END OTHERS */

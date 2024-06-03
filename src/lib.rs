@@ -7,11 +7,14 @@
 
 use core::panic::PanicInfo;
 
+use bootloader::{entry_point, BootInfo};
+
 pub mod gdt;
 pub mod interrupts;
+pub mod memory;
+pub mod prompt;
 pub mod serial;
 pub mod vga_buffer;
-pub mod prompt;
 
 pub trait Testable {
     fn run(&self);
@@ -27,7 +30,6 @@ where
         serial_println!("[ok]");
     }
 }
-
 
 pub fn test_runner(tests: &[&dyn Testable]) {
     serial_println!("Running {} tests", tests.len());
@@ -47,12 +49,13 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
 }
 
 #[cfg(test)]
-#[no_mangle] //don't mangle this function's name (basically, don' fuck it up)
+entry_point!(test_kernal_main);
 
-pub extern "C" fn _start() -> ! {
+#[cfg(test)]
+fn test_kernal_main(_boot_info: &'static BootInfo) -> ! {
     //entry point for 'cargo test'
     init(); //init idt
-    test_main(); //call tets
+    test_main(); //call test
     hlt_loop();
 }
 

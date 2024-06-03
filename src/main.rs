@@ -5,15 +5,12 @@
 #![test_runner(sketch_os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 use sketch_os::{draw_prompt, print, println};
 
 use lazy_static::lazy_static;
 use spin::Mutex;
-
-mod prompt;
-
-//don't mangle this function's name (basically, don' mess it up)
 
 lazy_static! {
     pub static ref USER: Mutex<&'static str> = Mutex::new("user");
@@ -23,19 +20,17 @@ lazy_static! {
     pub static ref MACHINE: Mutex<&'static str> = Mutex::new("machine");
 }
 
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
+entry_point!(kernal_main);
+fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     sketch_os::init(); //init idt
 
-    //print!("1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDE\n\n");
-    //draw_prompt!(&*USER.lock(), &*MACHINE.lock());
-    //println!("\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0");
-
+    /*
     // new
     let ptr = 0xdeadbeaf as *mut u8;
     unsafe {
         *ptr = 42;
     }
+    */
 
     println!("It didn't break!");
 

@@ -487,3 +487,11 @@ enum Direction {
 ```
 basically, i need to make it a public enum and i don't know how to do that. unfortunately, i'm on a plane (no internet sob)         
 so i have no way to figure out how to do that (note to self: download rust documentation onto computer)
+
+2024-06-05
+17:55
+it's been a while haha - i'm working on memory now (pretty difficult)
+
+
+
+

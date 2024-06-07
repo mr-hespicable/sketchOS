@@ -7,10 +7,12 @@
 
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use sketch_os::{draw_prompt, print, println};
+use x86_64::{structures::paging::PageTable, VirtAddr};
 
 use lazy_static::lazy_static;
 use spin::Mutex;
+
+use sketch_os::println;
 
 lazy_static! {
     pub static ref USER: Mutex<&'static str> = Mutex::new("user");
@@ -22,17 +24,28 @@ lazy_static! {
 
 entry_point!(kernal_main);
 fn kernal_main(bootinfo: &'static BootInfo) -> ! {
+    use sketch_os::{draw_prompt, memory::active_level_4_table};
     sketch_os::init(); //init idt
 
-    /*
-    // new
-    let ptr = 0xdeadbeaf as *mut u8;
-    unsafe {
-        *ptr = 42;
-    }
-    */
+    let phys_mem_offset = VirtAddr::new(bootinfo.physical_memory_offset);
+    let l4_table = unsafe { active_level_4_table(phys_mem_offset) };
 
-    println!("It didn't break!");
+    for (i, entry) in l4_table.iter().enumerate() {
+        if !entry.is_unused() {
+            println!("L4 Entry {}: {:?}", i, entry);
+
+            let phys = entry.frame().unwrap().start_address();
+            let virt = phys.as_u64() + bootinfo.physical_memory_offset;
+            let ptr = VirtAddr::new(virt).as_mut_ptr();
+            let l3_table: &PageTable = unsafe { &*ptr };
+
+            for (i, entry) in l3_table.iter().enumerate() {
+                if !entry.is_unused() {
+                    println!("  L3 Entry {}: {:?}", i, entry);
+                }
+            }
+        }
+    }
 
     #[cfg(test)]
     test_main();

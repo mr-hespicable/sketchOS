@@ -116,6 +116,7 @@ impl Writer {
         match byte {
             b'\n' => {
                 self.new_line();
+                self.move_cursor(Direction::Right, 1);
                 self.move_text(Direction::Right, true);
             }
             byte => {

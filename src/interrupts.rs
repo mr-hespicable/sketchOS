@@ -108,7 +108,7 @@ extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStac
                         //backspace
                         backspace!();
                     } else if scancode == 28 {
-                        print!("{}", character);
+                        print!("\n");
                         //TODO: get this stuff working
 
                         //let user = *crate::USER.lock();

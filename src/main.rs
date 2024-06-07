@@ -7,12 +7,10 @@
 
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use x86_64::{structures::paging::PageTable, VirtAddr};
-
 use lazy_static::lazy_static;
 use spin::Mutex;
 
-use sketch_os::{memory::translate_addr, println};
+use sketch_os::println;
 
 lazy_static! {
     pub static ref USER: Mutex<&'static str> = Mutex::new("user");
@@ -24,10 +22,13 @@ lazy_static! {
 
 entry_point!(kernal_main);
 fn kernal_main(bootinfo: &'static BootInfo) -> ! {
-    use sketch_os::{draw_prompt, memory::active_level_4_table};
+    use sketch_os::{draw_prompt, memory};
+    use x86_64::{structures::paging::Translate, VirtAddr};
+
     sketch_os::init(); //init idt
 
     let phys_mem_offset = VirtAddr::new(bootinfo.physical_memory_offset);
+    let mapper = unsafe { memory::init(phys_mem_offset) };
 
     let addresses = [
         // the identity-mapped vga buffer page
@@ -42,7 +43,7 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
 
     for &address in &addresses {
         let virt = VirtAddr::new(address);
-        let phys = unsafe { translate_addr(virt, phys_mem_offset) };
+        let phys = mapper.translate_addr(virt);
         println!("{:?} -> {:?}", virt, phys);
     }
 

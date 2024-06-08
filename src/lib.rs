@@ -5,7 +5,6 @@
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
-use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 use lazy_static::lazy_static;
 use spin::Mutex;
@@ -20,7 +19,6 @@ pub mod prompt;
 pub mod serial;
 pub mod vga_buffer;
 
-#[cfg(test)]
 lazy_static! {
     pub static ref USER: Mutex<&'static str> = Mutex::new("user");
     pub static ref MACHINE: Mutex<&'static str> = Mutex::new("machine");
@@ -60,6 +58,8 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
     hlt_loop();
 }
 
+#[allow(unused_imports)]
+use bootloader::{entry_point, BootInfo};
 #[cfg(test)]
 entry_point!(test_kernal_main);
 

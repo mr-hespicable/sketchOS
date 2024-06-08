@@ -27,10 +27,7 @@ lazy_static! {
 entry_point!(kernal_main);
 fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     use sketch_os::{draw_prompt, memory};
-    use x86_64::{
-        structures::paging::{Page, Size4KiB},
-        VirtAddr,
-    };
+    use x86_64::VirtAddr;
 
     sketch_os::init(); // init idt
 

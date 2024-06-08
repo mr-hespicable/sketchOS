@@ -38,12 +38,12 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
 
     let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
-    unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e) }
+    unsafe { page_ptr.offset(400).write_volatile(0x_e021_e077_e065_e04e) }
 
     #[cfg(test)]
     test_main();
 
-    println!("it did not crash!");
+    println!("it did not crash?!");
     sketch_os::hlt_loop();
 }
 

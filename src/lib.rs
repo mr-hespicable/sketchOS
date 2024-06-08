@@ -10,6 +10,16 @@ use core::panic::PanicInfo;
 use lazy_static::lazy_static;
 use spin::Mutex;
 
+extern crate alloc;
+
+pub mod allocator;
+pub mod gdt;
+pub mod interrupts;
+pub mod memory;
+pub mod prompt;
+pub mod serial;
+pub mod vga_buffer;
+
 #[cfg(test)]
 lazy_static! {
     pub static ref USER: Mutex<&'static str> = Mutex::new("user");
@@ -17,13 +27,6 @@ lazy_static! {
     pub static ref PROMPT_LENGTH: Mutex<usize> = Mutex::new(0);
     pub static ref PROMPT_ROW: Mutex<usize> = Mutex::new(0);
 }
-
-pub mod gdt;
-pub mod interrupts;
-pub mod memory;
-pub mod prompt;
-pub mod serial;
-pub mod vga_buffer;
 
 pub trait Testable {
     fn run(&self);

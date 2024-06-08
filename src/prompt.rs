@@ -1,3 +1,4 @@
+//TODO: rewrite all of this using alloc crate stuff
 #[derive(Debug)]
 pub struct Prompt<'a>(&'a str);
 

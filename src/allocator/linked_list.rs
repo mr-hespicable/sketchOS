@@ -1,3 +1,6 @@
+use super::align_up;
+use core::mem;
+
 struct ListNode {
     size: usize,
     next: Option<&'static mut ListNode>,
@@ -32,12 +35,23 @@ impl LinkedListAllocator {
         }
     }
 
-    ///Initialize allocator with given heap bounds
+    /// Initialize allocator with given heap bounds
     pub unsafe fn init(&mut self, heap_start: usize, heap_end: usize) {
         self.add_free_region(heap_start, heap_end);
     }
 
+    /// Adds the given memory region to the front of the list
     unsafe fn add_free_region(&mut self, addr: usize, size: usize) {
-        todo!()
+        // make sure nothing is fucked (memory is where it should be and node isnt bigger than
+        // remaining space available)
+        assert_eq!(align_up(addr, mem::align_of::<ListNode>()), addr);
+        assert!(size >= mem::size_of::<ListNode>());
+
+        // creates new node and appends it at start of list
+        let mut node = ListNode::new(size);
+        node.next = self.head.next.take();
+        let node_ptr = addr as *mut ListNode;
+        node_ptr.write(node);
+        self.head.next = Some(&mut *node_ptr);
     }
 }

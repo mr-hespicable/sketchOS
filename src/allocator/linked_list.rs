@@ -40,11 +40,12 @@ impl LinkedListAllocator {
         self.add_free_region(heap_start, heap_end);
     }
 
-    /// Adds the given memory region to the front of the list
+    /// Adds the given memory region to the front of the list (push operation)
     unsafe fn add_free_region(&mut self, addr: usize, size: usize) {
         // make sure nothing is fucked (memory is where it should be and node isnt bigger than
         // remaining space available)
-        assert_eq!(align_up(addr, mem::align_of::<ListNode>()), addr);
+        assert_eq!(align_up(addr, mem::align_of::<ListNode>()), addr); //is the address a list_node
+                                                                       //and the same size
         assert!(size >= mem::size_of::<ListNode>());
 
         // creates new node and appends it at start of list

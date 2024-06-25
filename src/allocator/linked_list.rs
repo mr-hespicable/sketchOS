@@ -2,8 +2,9 @@ use super::align_up;
 use core::mem;
 
 struct ListNode {
-    size: usize,
-    next: Option<&'static mut ListNode>,
+    size: usize, // size of listnode
+    next: Option<&'static mut ListNode>, // pointer to the next list node TODO: check if this is
+                 // actually true
 }
 
 impl ListNode {
@@ -64,15 +65,17 @@ impl LinkedListAllocator {
 
         while let Some(ref mut region) = current.next {
             if let Ok(alloc_start) = Self::alloc_from_region(&region, size, align) {
-                //the region is suitible for allocation -> remove node from list
+                // the region is suitible for allocation -> remove node from list
                 let next = region.next.take();
                 let ret = Some((current.next.take().unwrap(), alloc_start));
-                current.next = ret;
+                current.next = next;
                 return ret;
             } else {
-                //the region is not suitable -> continue with next region
+                // the region is not suitable -> continue with next region
                 current = current.next.as_mut().unwrap()
             }
         }
+        // no suitible region found
+        None
     }
 }

@@ -55,4 +55,24 @@ impl LinkedListAllocator {
         node_ptr.write(node);
         self.head.next = Some(&mut *node_ptr);
     }
+
+    /// Looks for free region of given size & alignment, and removes it from the list.
+    ///
+    /// Returns an Option-wrapped tuple of the list node and the start address
+    fn find_region(&mut self, size: usize, align: usize) -> Option<(&'static mut ListNode, usize)> {
+        let mut current = &mut self.head;
+
+        while let Some(ref mut region) = current.next {
+            if let Ok(alloc_start) = Self::alloc_from_region(&region, size, align) {
+                //the region is suitible for allocation -> remove node from list
+                let next = region.next.take();
+                let ret = Some((current.next.take().unwrap(), alloc_start));
+                current.next = ret;
+                return ret;
+            } else {
+                //the region is not suitable -> continue with next region
+                current = current.next.as_mut().unwrap()
+            }
+        }
+    }
 }

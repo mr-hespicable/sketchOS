@@ -1,5 +1,8 @@
-use super::align_up;
-use core::mem;
+use super::{align_up, Locked};
+use core::{
+    alloc::{GlobalAlloc, Layout},
+    mem, ptr,
+};
 
 struct ListNode {
     size: usize, // size of listnode
@@ -77,5 +80,63 @@ impl LinkedListAllocator {
         }
         // no suitible region found
         None
+    }
+
+    /// Try to use the given region for an allocation with a given `size` and `alignment`.
+    ///
+    /// Returns this allocation's start address on success.
+    fn alloc_from_region(region: &ListNode, size: usize, align: usize) -> Result<usize, ()> {
+        let alloc_start = align_up(region.start_addr(), align);
+        let alloc_end = alloc_start.checked_add(size).ok_or(())?; // checked addition so that
+                                                                  // overflow does not occur; if it
+                                                                  // does, return Err(()) from ok_or()
+        if alloc_end > region.end_addr() {
+            // region too small
+            return Err(());
+        }
+
+        let excess = region.end_addr() - alloc_end;
+
+        if excess > 0 && excess < mem::size_of::<ListNode>() {
+            // rest of region (the excess) too small to hold a full ListNode
+            return Err(());
+        }
+
+        Ok(alloc_start)
+    }
+
+    fn size_align(layout: Layout) -> (usize, usize) {
+        let layout = layout
+            .align_to(mem::align_of::<ListNode>()) // attempt to increase alignment to size of listnode
+            .expect("adjusting alignment failed")
+            .pad_to_align(); // rounds size of the current block up to a multiple of the alignment, so the starting
+                             // address of the next block will have the correct alignment for storing a listnode as
+                             // well.
+        let size = layout.size().max(mem::size_of::<ListNode>());
+        (size, layout.align())
+    }
+}
+
+unsafe impl GlobalAlloc for Locked<LinkedListAllocator> {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        let (size, align) = LinkedListAllocator::size_align(layout); // TODO: implement size_align
+        let mut allocator = self.lock();
+
+        if let Some((region, alloc_start)) = allocator.find_region(size, align) {
+            let alloc_end = alloc_start.checked_add(size).expect("overflow has occured");
+            let excess_size = region.end_addr() - alloc_end;
+            if excess_size > 0 {
+                allocator.add_free_region(alloc_end, excess_size);
+            }
+            alloc_start as *mut u8 // return ptr to start of allocation region
+        } else {
+            ptr::null_mut() // return a null_mut to signify there is no mem region available
+        }
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        let (size, _) = LinkedListAllocator::size_align(layout); // TODO: implement size_align
+
+        self.lock().add_free_region(ptr as usize, size);
     }
 }

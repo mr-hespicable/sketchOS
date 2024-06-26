@@ -1,8 +1,17 @@
 # sketchOS
 operating system built in rust
 
-this code is licensed under the 
+this code is licensed under CC-BY-NC-ND
 
-### devlog
-the devlog format is as follows:
-YY-MM-DD_HH.MM.SS
+todo: 
+
+- [x] start
+- [x] make vga buffer
+- [x] make lib.rs
+- [x] add test functionality
+- [x] add interrupts (keyboard)
+- [ ] add alloc. functionality for dynamic types, etc
+- [ ] build some simple test programs to run on memory (req: memory lol)
+- [ ] get terminal functionality up and running (req: alloc, probably)
+- [ ] get prompt working (req: alloc)
+

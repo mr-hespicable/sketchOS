@@ -14,4 +14,5 @@ todo:
 - [ ] build some simple test programs to run on memory (req: memory lol)
 - [ ] get terminal functionality up and running (req: alloc, probably)
 - [ ] get prompt working (req: alloc)
+- [ ] meet w advisor
 

@@ -8,6 +8,7 @@ use x86_64::{
 };
 
 pub mod bump;
+pub mod fsb;
 pub mod linked_list;
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;

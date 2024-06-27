@@ -1,4 +1,5 @@
 use bump::BumpAllocator;
+use fsb::FSBAllocator;
 use linked_list::LinkedListAllocator;
 use x86_64::{
     structures::paging::{
@@ -10,6 +11,7 @@ use x86_64::{
 pub mod bump;
 pub mod fsb;
 pub mod linked_list;
+pub mod slab;
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
@@ -36,7 +38,7 @@ fn align_up(addr: usize, align: usize) -> usize {
 }
 
 #[global_allocator]
-static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
+static ALLOCATOR: Locked<FSBAllocator> = Locked::new(FSBAllocator::new());
 
 pub fn init_heap(
     mapper: &mut impl Mapper<Size4KiB>,

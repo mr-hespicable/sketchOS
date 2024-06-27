@@ -118,7 +118,7 @@ impl LinkedListAllocator {
 
 unsafe impl GlobalAlloc for Locked<LinkedListAllocator> {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        let (size, align) = LinkedListAllocator::size_align(layout); // TODO: implement size_align
+        let (size, align) = LinkedListAllocator::size_align(layout);
         let mut allocator = self.lock();
 
         if let Some((region, alloc_start)) = allocator.find_region(size, align) {
@@ -132,9 +132,8 @@ unsafe impl GlobalAlloc for Locked<LinkedListAllocator> {
             ptr::null_mut() // return a null_mut to signify there is no mem region available
         }
     }
-
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        let (size, _) = LinkedListAllocator::size_align(layout); // TODO: implement size_align
+        let (size, _) = LinkedListAllocator::size_align(layout);
 
         self.lock().add_free_region(ptr as usize, size);
     }

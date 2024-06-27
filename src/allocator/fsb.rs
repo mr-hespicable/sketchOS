@@ -4,8 +4,6 @@ use core::{
     ptr::{self, NonNull},
 };
 
-use crate::memory;
-
 use super::Locked;
 
 const BLOCK_SIZES: &[usize] = &[8, 16, 32, 64, 128, 256, 512, 1024, 2048]; // TODO: add additional
@@ -26,6 +24,10 @@ impl FSBAllocator {
             list_heads: [EMPTY; BLOCK_SIZES.len()],
             fallback_alloc: linked_list_allocator::Heap::empty(),
         }
+    }
+
+    pub unsafe fn init(&mut self, heap_start: usize, heap_size: usize) {
+        self.fallback_alloc.init(heap_start, heap_size);
     }
 
     fn fallback_allocator(&mut self, layout: Layout) -> *mut u8 {

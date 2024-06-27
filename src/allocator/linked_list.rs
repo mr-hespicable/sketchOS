@@ -5,9 +5,8 @@ use core::{
 };
 
 struct ListNode {
-    size: usize, // size of listnode
-    next: Option<&'static mut ListNode>, // pointer to the next list node TODO: check if this is
-                 // actually true
+    size: usize,                         // size of listnode
+    next: Option<&'static mut ListNode>, // pointer to the next list node
 }
 
 impl ListNode {

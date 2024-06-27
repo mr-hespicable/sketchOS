@@ -1,6 +1,6 @@
-use bump::BumpAllocator;
+// use bump::BumpAllocator;
 use fsb::FSBAllocator;
-use linked_list::LinkedListAllocator;
+// use linked_list::LinkedListAllocator;
 use x86_64::{
     structures::paging::{
         mapper::MapToError, FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB,

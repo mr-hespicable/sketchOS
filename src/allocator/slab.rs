@@ -12,6 +12,7 @@ impl<T> Slab<T> {
     pub const fn new() -> Self {
         let mut free_list = [0; SLAB_SIZE];
 
-        todo!() // TODO: implement slab allocation
+        // TODO: implement free pointer
+        // https://blogs.oracle.com/linux/post/linux-slub-allocator-internals-and-debugging-1
     }
 }

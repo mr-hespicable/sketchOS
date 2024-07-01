@@ -7,8 +7,6 @@
 #![feature(const_mut_refs)]
 
 use core::panic::PanicInfo;
-use lazy_static::lazy_static;
-use spin::Mutex;
 
 extern crate alloc;
 
@@ -19,13 +17,6 @@ pub mod memory;
 pub mod prompt;
 pub mod serial;
 pub mod vga_buffer;
-
-lazy_static! {
-    pub static ref USER: Mutex<&'static str> = Mutex::new("user");
-    pub static ref MACHINE: Mutex<&'static str> = Mutex::new("machine");
-    pub static ref PROMPT_LENGTH: Mutex<usize> = Mutex::new(0);
-    pub static ref PROMPT_ROW: Mutex<usize> = Mutex::new(0);
-}
 
 pub trait Testable {
     fn run(&self);

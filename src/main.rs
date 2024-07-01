@@ -68,16 +68,16 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     sketch_os::hlt_loop();
 }
 
-//call this on panic
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    println!();
-    sketch_os::hlt_loop();
-}
-
 #[cfg(test)]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     sketch_os::test_panic_handler(info)
+}
+
+//call this on panic
+#[cfg(not(test))]
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    println!();
+    sketch_os::hlt_loop();
 }

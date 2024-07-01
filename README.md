@@ -10,8 +10,8 @@ todo:
 - [x] make lib.rs
 - [x] add test functionality
 - [x] add interrupts (keyboard)
-- [ ] add alloc. functionality for dynamic types, etc
-- [ ] build some simple test programs to run on memory (req: memory lol)
+- [x] add alloc. functionality for dynamic types, etc
+- [x] build some simple test programs to run on memory (req: memory lol)
 - [ ] get terminal functionality up and running (req: alloc, probably)
 - [ ] get prompt working (req: alloc)
 - [ ] meet w advisor

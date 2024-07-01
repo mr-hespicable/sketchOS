@@ -1,4 +1,5 @@
 #![allow(clippy::all)]
+#![allow(dead_code)]
 
 use core::array::from_fn;
 

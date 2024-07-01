@@ -39,6 +39,7 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     // allocate a number on the heap
     let heap_value = Box::new(41);
     println!("heap_value at {:p}", heap_value);
+    println!("uwu");
 
     // create a dynamically sized vector
     let mut vec = Vec::new();

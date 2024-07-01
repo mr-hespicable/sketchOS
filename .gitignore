@@ -25,11 +25,4 @@ Cargo.lock
 # other gitignore files
 **/.DS_Store
 **/.gdb_history
-
-
-
-# Added by cargo
-#
-# already existing elements were commented out
-
-#/target
+.gdb_history

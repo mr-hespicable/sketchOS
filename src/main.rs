@@ -26,7 +26,7 @@ lazy_static! {
 
 entry_point!(kernal_main);
 fn kernal_main(bootinfo: &'static BootInfo) -> ! {
-    use sketch_os::{/* TODO: draw_prompt,*/ memory};
+    use sketch_os::{/* draw_prompt,*/ memory};
     use x86_64::VirtAddr;
 
     sketch_os::init(); // init idt
@@ -63,7 +63,7 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     #[cfg(test)]
     test_main();
 
-    println!("it did not crash?!");
+    println!();
     sketch_os::hlt_loop();
 }
 
@@ -71,7 +71,7 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    println!("{info}");
+    println!();
     sketch_os::hlt_loop();
 }
 

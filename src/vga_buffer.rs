@@ -570,7 +570,7 @@ pub fn _move_cursor_right() {
 pub fn _move_chars_left() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        // writer.move_chars(0);
+        writer.move_chars(Direction::Left);
     });
 }
 
@@ -578,7 +578,7 @@ pub fn _move_chars_left() {
 pub fn _move_chars_right() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        // writer.move_chars(1);
+        writer.move_chars(Direction::Right);
     });
 }
 

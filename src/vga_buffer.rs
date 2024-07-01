@@ -1,3 +1,4 @@
+use alloc::string::ToString;
 use core::{
     fmt::{Arguments, Result, Write},
     usize,
@@ -6,6 +7,8 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
 use x86_64::instructions::interrupts;
+
+use crate::prompt::Prompt;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -267,9 +270,8 @@ impl Writer {
                 for col in (left_col_index..right_col_index).rev() {
                     let char = self.buffer.chars[row][col].read();
 
-                    let final_index = BUFFER_WIDTH - 1;
                     match col {
-                        final_index => self.buffer.chars[row + 1][0].write(char),
+                        79 => self.buffer.chars[row + 1][0].write(char), // TODO: make this flexible
                         _ => self.buffer.chars[row][col + 1].write(char),
                     }
                 }
@@ -350,7 +352,7 @@ impl Writer {
 
     /* CURSOR FUNCTIONS*/
     fn move_cursor(&mut self, direction: Direction, iterations: usize) {
-        for iteration in 0..iterations {
+        for _ in 0..iterations {
             match direction {
                 Direction::Up => {
                     if self.cursor_row == 0 {
@@ -415,26 +417,9 @@ impl Writer {
 
     /* OTHERS */
     pub fn draw_prompt(&mut self, user: &str, machine: &str) {
-        let prompt_row: usize = self.cursor_row;
-        //crate::PROMPT_ROW.lock() = prompt_row;
+        let prompt: Prompt = Prompt::new(user.to_string(), machine.to_string());
 
-        let prompt_array: [u8; 256] = crate::prompt::Prompt::new(user, machine);
-
-        let mut prompt_length: usize = 0;
-
-        for byte in prompt_array {
-            match byte {
-                0 => continue,
-                _ => {
-                    self.write_byte(byte, self.cursor_row, self.cursor_column);
-                    prompt_length += 1;
-                }
-            }
-        }
-        self.write_byte(b' ', self.cursor_row, self.cursor_column);
-        prompt_length += 1;
-
-        //*crate::PROMPT_LENGTH.lock() = prompt_length;
+        self.write_string(&prompt.user as &str);
     }
 
     /* END OTHERS */
@@ -538,7 +523,7 @@ pub fn _print_byte(args: Arguments) {
 pub fn _clear() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        // writer.clear_screen();
+        writer.clear_screen();
     });
 }
 

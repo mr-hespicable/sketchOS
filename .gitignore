@@ -13,15 +13,6 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
-
-# Added by cargo
-
-/target
-
-# Added by cargo
-
-# already existing elements were commented out
-
 # other gitignore files
 **/.DS_Store
 **/.gdb_history

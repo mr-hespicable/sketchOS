@@ -19,12 +19,12 @@ impl Prompt {
     pub fn new(user: String, machine: String) -> Prompt {
         let prompt = format!("{}@{} ~>", user, machine).to_string(); // user@machine>>
 
-        return Prompt {
+        Prompt {
             user,
             machine,
             prompt_text: prompt,
             prompt_location: (0, 0),
-        };
+        }
     }
 }
 

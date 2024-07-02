@@ -53,12 +53,13 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
 
 #[allow(unused_imports)]
 use bootloader::{entry_point, BootInfo};
+
 #[cfg(test)]
 entry_point!(test_kernal_main);
 
 #[cfg(test)]
+/// entry point for `cargo test`
 fn test_kernal_main(_boot_info: &'static BootInfo) -> ! {
-    //entry point for 'cargo test'
     init(); //init idt
     test_main(); //call tests
     hlt_loop(); //hang

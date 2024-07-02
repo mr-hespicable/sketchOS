@@ -10,9 +10,8 @@ extern crate alloc;
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 use lazy_static::lazy_static;
-use spin::Mutex;
-
 use sketch_os::{allocator, memory::BootInfoFrameAllocator, println};
+use spin::Mutex;
 
 lazy_static! {
     pub static ref USER: Mutex<&'static str> = Mutex::new("user");
@@ -37,13 +36,11 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
 
     /* MAIN CODE GOES HERE */
     draw_prompt!("user", "machine");
-    /* MAIN CODE END */
 
     #[cfg(test)]
     test_main();
 
-    println!();
-    sketch_os::hlt_loop();
+    sketch_os::hlt_loop()
 }
 
 #[cfg(test)]

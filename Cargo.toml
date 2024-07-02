@@ -18,6 +18,17 @@ x86_64 = "0.14.2"
 linked_list_allocator = "0.9.0"
 
 [package.metadata.bootimage]
+run-command = [
+    "qemu-system-x86_64",
+
+    "-display",
+    "gtk,",
+    "zoom-to-fit=on",
+    "-drive",
+    "format=raw,",
+    "file={}",
+]
+
 test-args = [
     "-device",
     "isa-debug-exit,iobase=0xf4,iosize=0x04,",

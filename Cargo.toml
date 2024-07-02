@@ -22,11 +22,9 @@ run-command = [
     "qemu-system-x86_64",
 
     "-display",
-    "gtk,",
-    "zoom-to-fit=on",
+    "gtk,zoom-to-fit=on",
     "-drive",
-    "format=raw,",
-    "file={}",
+    "format=raw,file={}",
 ]
 
 test-args = [

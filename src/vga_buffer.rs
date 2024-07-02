@@ -415,7 +415,7 @@ impl Writer {
     pub fn draw_prompt(&mut self, user: &str, machine: &str) {
         let prompt: Prompt = Prompt::new(user.to_string(), machine.to_string());
 
-        self.write_string(&prompt.user as &str);
+        self.write_string(&prompt.prompt_text as &str);
     }
 
     /* END OTHERS */

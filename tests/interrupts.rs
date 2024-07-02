@@ -5,7 +5,7 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
-use sketch_os::{exit_qemu, serial_println, QemuExitCode};
+use sketch_os::{exit_qemu, hlt_loop, serial_println, QemuExitCode};
 
 static mut SHOULD_FAIL: bool = false;
 
@@ -13,12 +13,11 @@ static mut SHOULD_FAIL: bool = false;
 pub extern "C" fn _start() -> ! {
     sketch_os::init(); //init idt
     test_main();
-    #[allow(clippy::empty_loop)]
-    loop {}
+    hlt_loop();
 }
 
 fn should_fail() -> bool {
-    //if this is true: fail panic thing, else: non-fail panic thing.
+    //if this is true: fail panic thing, else: don't-fail panic thing.
     unsafe { SHOULD_FAIL }
 }
 
@@ -41,7 +40,7 @@ fn panic_should_fail(_info: &PanicInfo) -> ! {
     set_should_fail(false);
     serial_println!("[ok]");
     exit_qemu(QemuExitCode::Success);
-    loop {}
+    hlt_loop();
 }
 
 //tests go here
@@ -55,7 +54,12 @@ fn test_breakpoint() {
 fn test_double_fault() {
     set_should_fail(true);
 
-    // Perform the test that may cause a normal double fault
+    #[allow(unconditional_recursion)]
+    fn recursive_function() {
+        recursive_function();
+    }
+
+    recursive_function();
     unsafe {
         *(0xdeadbeef as *mut u8) = 42;
     }

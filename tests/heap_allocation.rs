@@ -9,7 +9,7 @@ extern crate alloc;
 use alloc::{boxed::Box, vec::Vec};
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use sketch_os::allocator::HEAP_SIZE;
+use sketch_os::{allocator::HEAP_SIZE, hlt_loop};
 
 entry_point!(main);
 fn main(bootinfo: &'static BootInfo) -> ! {
@@ -25,7 +25,7 @@ fn main(bootinfo: &'static BootInfo) -> ! {
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap init failed"); // init heap
 
     test_main();
-    loop {}
+    hlt_loop()
 }
 
 #[panic_handler]

@@ -19,11 +19,12 @@ pub struct BootInfoFrameAllocator {
 }
 
 impl BootInfoFrameAllocator {
-    /// create frame allocator from passed memory_map
+    /// Create a frame allocator from passed `memory_map`
     ///
-    /// unsafe fn bc caller must guarantee that the
-    /// memory map is 100% valid - basically, they have
-    /// to be marked as USABLE (flag)
+    /// # Safety
+    /// Caller must guarantee that the
+    /// memory map is 100% valid - locations
+    /// must be marked as USABLE (flag)
     pub unsafe fn init(memory_map: &'static MemoryMap) -> Self {
         BootInfoFrameAllocator {
             memory_map,
@@ -52,11 +53,16 @@ unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
     }
 }
 
-/// return page table offset from physical memory offset
-/// WARNING: idk
+/// Return a page table offset from a given physical memory offset
+///
+/// # Safety
+///
+/// This function is unsafe because `physical_mem_offset` must be a valid location
 pub unsafe fn init(physical_mem_offset: VirtAddr) -> OffsetPageTable<'static> {
-    let level_4_table = active_level_4_table(physical_mem_offset);
-    OffsetPageTable::new(level_4_table, physical_mem_offset)
+    unsafe {
+        let level_4_table = active_level_4_table(physical_mem_offset);
+        OffsetPageTable::new(level_4_table, physical_mem_offset)
+    }
 }
 
 /// Returns page table pointer reference to active level 4 table.
@@ -73,5 +79,5 @@ unsafe fn active_level_4_table(physical_mem_offset: VirtAddr) -> &'static mut Pa
     let virt = physical_mem_offset + phys.as_u64();
     let page_table_ptr: *mut PageTable = virt.as_mut_ptr();
 
-    &mut *page_table_ptr
+    unsafe { &mut *page_table_ptr }
 }

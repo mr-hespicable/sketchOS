@@ -26,8 +26,12 @@ impl FSBAllocator {
         }
     }
 
+    /// # Safety
+    ///
+    /// This function is unsafe because the caller must ensure that the given
+    /// memory range is unused. The function must also only be called once.
     pub unsafe fn init(&mut self, heap_start: usize, heap_size: usize) {
-        self.fallback_alloc.init(heap_start, heap_size);
+        unsafe { self.fallback_alloc.init(heap_start, heap_size) };
     }
 
     fn fallback_allocator(&mut self, layout: Layout) -> *mut u8 {
@@ -35,6 +39,11 @@ impl FSBAllocator {
             Ok(ptr) => ptr.as_ptr(),
             Err(_) => ptr::null_mut(),
         }
+    }
+}
+impl Default for FSBAllocator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

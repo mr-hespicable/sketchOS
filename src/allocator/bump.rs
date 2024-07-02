@@ -3,6 +3,7 @@ use core::ptr;
 use super::{align_up, Locked};
 use alloc::alloc::{GlobalAlloc, Layout};
 
+#[derive(Default)]
 pub struct BumpAllocator {
     heap_start: usize,
     heap_end: usize,
@@ -20,13 +21,16 @@ impl BumpAllocator {
         }
     }
 
+    /// # Safety
+    ///
+    /// This function is unsafe because the caller must ensure that the given
+    /// memory range is unused. The function must also only be called once.
     pub unsafe fn init(&mut self, heap_start: usize, heap_size: usize) {
         self.heap_start = heap_start;
         self.heap_end = heap_start + heap_size;
         self.next = heap_start;
     }
 }
-
 unsafe impl GlobalAlloc for Locked<BumpAllocator> {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let mut bump = self.lock();

@@ -1,8 +1,5 @@
 use alloc::string::ToString;
-use core::{
-    fmt::{Arguments, Result, Write},
-    usize,
-};
+use core::fmt::{Arguments, Result, Write};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
@@ -142,7 +139,7 @@ impl Writer {
 
     pub fn write_string(&mut self, s: &str) {
         for i in 0..s.len() {
-            let byte = s.bytes().nth(i).unwrap();
+            let byte = s.as_bytes()[i];
             match byte {
                 // printable ascii byte or newline
                 0x20..=0x7e | b'\n' => self.write_byte(byte, self.cursor_row, self.cursor_column),
@@ -342,9 +339,8 @@ impl Writer {
             ),
         }
 
-        match newline_check {
-            true => self.text_row += 1,
-            _ => {}
+        if newline_check {
+            self.text_row += 1
         }
     }
 

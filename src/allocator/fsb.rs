@@ -79,9 +79,11 @@ unsafe impl GlobalAlloc for Locked<FSBAllocator> {
         let mut allocator = self.lock();
 
         match list_index(&layout) {
-            None => allocator
-                .fallback_alloc
-                .deallocate(NonNull::new(ptr).unwrap() as NonNull<u8>, layout),
+            None => unsafe {
+                allocator
+                    .fallback_alloc
+                    .deallocate(NonNull::new(ptr).unwrap() as NonNull<u8>, layout)
+            },
             Some(index) => {
                 let new_list_node: ListNode = ListNode {
                     next: allocator.list_heads[index].take(),
@@ -91,9 +93,8 @@ unsafe impl GlobalAlloc for Locked<FSBAllocator> {
                 assert!(mem::align_of::<ListNode>() <= BLOCK_SIZES[index]); // size + alignment to store the list node
 
                 let new_list_node_ptr = ptr as *mut ListNode;
-                new_list_node_ptr.write(new_list_node); // write new list node to the location of
-                                                        // the new list node's ptr
-                allocator.list_heads[index] = Some(&mut *new_list_node_ptr);
+                unsafe { new_list_node_ptr.write(new_list_node) }; // write new list node to the location of the new list node's ptr
+                allocator.list_heads[index] = Some(unsafe { &mut *new_list_node_ptr });
             }
         }
     }

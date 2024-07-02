@@ -17,3 +17,4 @@ Cargo.lock
 **/.DS_Store
 **/.gdb_history
 .gdb_history
+.bacon-locations

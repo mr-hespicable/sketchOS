@@ -36,7 +36,7 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap init failed"); // init heap
 
     /* MAIN CODE GOES HERE */
-    draw_prompt!("user", "macb");
+    draw_prompt!("user", "machine");
     /* MAIN CODE END */
 
     #[cfg(test)]

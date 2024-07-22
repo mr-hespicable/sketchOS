@@ -111,13 +111,13 @@ lazy_static! {
 }
 
 impl Writer {
-    /* WRiTING THINGS */
+    /* WRITING THINGS */
     pub fn write_byte(&mut self, byte: u8, row: usize, col: usize) {
         match byte {
             b'\n' => {
-                self.new_line();
-                self.move_cursor(Direction::Right, 1);
                 self.move_text(Direction::Right, true);
+                self.new_line();
+                self.move_cursor(Direction::Right, 0); // place cursor at start of line
             }
             byte => {
                 if self.cursor_column != self.text_column {
@@ -315,7 +315,7 @@ impl Writer {
 
     fn move_text(&mut self, direction: Direction, newline_check: bool) {
         /*
-         *   For the movement of self.text_[column, row].
+         *   For the movement of self.text_(column, row).
          */
         match direction {
             Direction::Left => match self.text_column {
@@ -365,8 +365,8 @@ impl Writer {
 
                 Direction::Left => match self.cursor_column {
                     0 => {
-                        self.move_cursor(Direction::Up, 1);
                         self.cursor_column = BUFFER_WIDTH - 1;
+                        self.move_cursor(Direction::Up, 1);
                     }
                     _ => {
                         self.cursor_column -= 1;
@@ -374,8 +374,8 @@ impl Writer {
                 },
                 Direction::Right => {
                     if self.cursor_column == BUFFER_WIDTH - 1 {
-                        self.move_cursor(Direction::Down, 1);
                         self.cursor_column = 0;
+                        self.move_cursor(Direction::Down, 1);
                     } else {
                         self.cursor_column += 1;
                     }
@@ -387,6 +387,7 @@ impl Writer {
 
     fn draw_cursor(&mut self) {
         // make all chars not highlighted
+        // TODO: make this more efficient
         for row in 0..BUFFER_HEIGHT - 1 {
             for col in 0..BUFFER_WIDTH - 1 {
                 let ascii_char = self.buffer.chars[row][col].read().ascii_char;
@@ -415,7 +416,7 @@ impl Writer {
     pub fn draw_prompt(&mut self, user: &str, machine: &str) {
         let prompt: Prompt = Prompt::new(user.to_string(), machine.to_string());
 
-        self.write_string(&prompt.user as &str);
+        self.write_string(&prompt.prompt_text as &str);
     }
 
     /* END OTHERS */

@@ -10,7 +10,7 @@ extern crate alloc;
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 use lazy_static::lazy_static;
-use sketch_os::{allocator, memory::BootInfoFrameAllocator, println};
+use sketch_os::{allocator, memory::BootInfoFrameAllocator, print, println};
 use spin::Mutex;
 
 lazy_static! {
@@ -22,8 +22,9 @@ lazy_static! {
 }
 
 entry_point!(kernal_main);
+#[no_mangle]
 fn kernal_main(bootinfo: &'static BootInfo) -> ! {
-    use sketch_os::{draw_prompt, memory};
+    use sketch_os::memory;
     use x86_64::VirtAddr;
 
     sketch_os::init(); // init idt
@@ -35,7 +36,7 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap init failed"); // init heap
 
     /* MAIN CODE GOES HERE */
-    draw_prompt!("user", "machine");
+    print!("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW");
 
     #[cfg(test)]
     test_main();

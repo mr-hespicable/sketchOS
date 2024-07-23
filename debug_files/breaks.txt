@@ -1,1 +1,2 @@
 break kernal_main
+break vga_buffer.rs:301

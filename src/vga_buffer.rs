@@ -388,8 +388,8 @@ impl Writer {
     fn draw_cursor(&mut self) {
         // make all chars not highlighted
         // TODO: make this more efficient
-        for row in 0..BUFFER_HEIGHT - 1 {
-            for col in 0..BUFFER_WIDTH - 1 {
+        for row in 0..BUFFER_HEIGHT {
+            for col in 0..BUFFER_WIDTH {
                 let ascii_char = self.buffer.chars[row][col].read().ascii_char;
 
                 self.buffer.chars[row][col].write(ScreenChar {

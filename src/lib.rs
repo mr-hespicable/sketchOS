@@ -15,6 +15,7 @@ use spin::Mutex;
 extern crate alloc;
 
 pub mod allocator;
+pub mod buffer;
 pub mod gdt;
 pub mod interrupts;
 pub mod memory;

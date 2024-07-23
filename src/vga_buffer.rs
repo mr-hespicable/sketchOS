@@ -5,7 +5,7 @@ use spin::Mutex;
 use volatile::Volatile;
 use x86_64::instructions::interrupts;
 
-use crate::prompt::Prompt;
+use crate::{prompt::Prompt, PROMPT};
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -166,7 +166,7 @@ impl Writer {
         for row in 0..BUFFER_HEIGHT {
             self.clear_line(row);
         }
-        self.draw_prompt("clear -> user", "machine");
+        self.draw_prompt(PROMPT.lock().clone()); // performance cost is acceptable
     }
 
     fn clear_line(&mut self, row: usize) {
@@ -299,18 +299,15 @@ impl Writer {
     }
 
     fn safe_to_delete(&mut self) -> bool {
-        //TODO: make this all work
+        let prompt_row = PROMPT.lock().clone().prompt_row;
+        let prompt_len = PROMPT.lock().clone().len();
 
-        /*
-        let prompt_length = *crate::PROMPT_LENGTH.lock();
-        let prompt_row = *crate::PROMPT_ROW.lock();
-        if self.cursor_column <= prompt_length && self.cursor_row == prompt_row {
-            false
-        } else {
-            true
-        }
-        */
-        true
+        let cursor_not_at_top_left = !(self.cursor_column == 0 && self.cursor_row == 0);
+        let cursor_near_prompt = self.cursor_row == prompt_row && self.cursor_column > prompt_len;
+        let cursor_far_from_prompt = self.cursor_row != prompt_row;
+
+        cursor_not_at_top_left && (cursor_near_prompt || cursor_far_from_prompt)
+        // true
     }
 
     fn move_text(&mut self, direction: Direction, newline_check: bool) {
@@ -413,10 +410,8 @@ impl Writer {
     /* END CURSOR FUNCTIONS */
 
     /* OTHERS */
-    pub fn draw_prompt(&mut self, user: &str, machine: &str) {
-        let prompt: Prompt = Prompt::new(user.to_string(), machine.to_string());
-
-        self.write_string(&prompt.prompt_text as &str);
+    pub fn draw_prompt(&mut self, prompt: Prompt) {
+        self.write_string(prompt.prompt_text.as_str());
     }
 
     /* END OTHERS */
@@ -448,11 +443,6 @@ macro_rules! print {
 macro_rules! println {
     () => ($crate::print!("\n"));
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
-}
-
-#[macro_export]
-macro_rules! print_byte {
-    ($($arg:tt)*) => ($crate::vga_buffer::_print_byte(format_args!($($arg)*)));
 }
 
 #[macro_export]
@@ -491,8 +481,8 @@ macro_rules! move_chars {
 
 #[macro_export]
 macro_rules! draw_prompt {
-    ($user:expr, $machine:expr) => {
-        $crate::vga_buffer::_draw_prompt($user, $machine);
+    ($prompt:expr) => {
+        $crate::vga_buffer::_draw_prompt($prompt);
     };
 }
 
@@ -507,13 +497,6 @@ pub fn _print(args: Arguments) {
     interrupts::without_interrupts(|| {
         WRITER.lock().write_fmt(args).unwrap();
     });
-}
-
-#[doc(hidden)]
-pub fn _print_byte(args: Arguments) {
-    interrupts::without_interrupts(|| {
-        WRITER.lock().write_fmt(args).unwrap();
-    })
 }
 
 #[doc(hidden)]
@@ -565,9 +548,9 @@ pub fn _move_chars_right() {
 }
 
 #[doc(hidden)]
-pub fn _draw_prompt(user: &str, machine: &str) {
+pub fn _draw_prompt(prompt: Prompt) {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writer.draw_prompt(user, machine);
+        writer.draw_prompt(prompt);
     })
 }

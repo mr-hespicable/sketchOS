@@ -9,17 +9,7 @@ extern crate alloc;
 
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use lazy_static::lazy_static;
-use sketch_os::{allocator, memory::BootInfoFrameAllocator, print, println};
-use spin::Mutex;
-
-lazy_static! {
-    pub static ref USER: Mutex<&'static str> = Mutex::new("user");
-}
-
-lazy_static! {
-    pub static ref MACHINE: Mutex<&'static str> = Mutex::new("machine");
-}
+use sketch_os::{allocator, draw_prompt, memory::BootInfoFrameAllocator, print, println, PROMPT};
 
 entry_point!(kernal_main);
 #[no_mangle]
@@ -36,7 +26,10 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap init failed"); // init heap
 
     /* MAIN CODE GOES HERE */
-    print!("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW");
+    let fake_prompt = PROMPT.lock().clone();
+    draw_prompt!(fake_prompt.clone());
+    let coords: (usize, usize) = (fake_prompt.prompt_row, fake_prompt.prompt_column);
+    print!("{:?}", coords);
 
     #[cfg(test)]
     test_main();

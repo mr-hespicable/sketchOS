@@ -6,7 +6,11 @@
 #![reexport_test_harness_main = "test_main"]
 #![feature(const_mut_refs)]
 
+use crate::prompt::Prompt;
+use alloc::string::ToString;
 use core::panic::PanicInfo;
+use lazy_static::lazy_static;
+use spin::Mutex;
 
 extern crate alloc;
 
@@ -17,6 +21,11 @@ pub mod memory;
 pub mod prompt;
 pub mod serial;
 pub mod vga_buffer;
+
+lazy_static! {
+    pub static ref PROMPT: Mutex<Prompt> =
+        Mutex::new(Prompt::new("user".to_string(), "machine".to_string()));
+}
 
 pub trait Testable {
     fn run(&self);

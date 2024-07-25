@@ -1,11 +1,10 @@
-use alloc::string::ToString;
 use core::fmt::{Arguments, Result, Write};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
 use x86_64::instructions::interrupts;
 
-use crate::{prompt::Prompt, PROMPT};
+use crate::{prompt::Prompt, text_buffer::TextBuffer, PROMPT};
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -108,18 +107,24 @@ lazy_static! {
             buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
         })
     };
+
+}
+
+lazy_static! {
+    pub static ref TEXT_BUFFER: Mutex<TextBuffer> = Mutex::new(TextBuffer::new());
 }
 
 impl Writer {
     /* WRITING THINGS */
     pub fn write_byte(&mut self, byte: u8, row: usize, col: usize) {
+        self.write_to_text_buffer(byte);
         match byte {
             b'\n' => {
                 self.move_text(Direction::Right, true);
                 self.new_line();
                 self.move_cursor(Direction::Right, 0); // place cursor at start of line
             }
-            byte => {
+            _ => {
                 if self.cursor_column != self.text_column {
                     // TODO: figure out how to move chars
                 }
@@ -146,6 +151,10 @@ impl Writer {
                 _ => self.write_byte(0xfe, self.cursor_row, self.cursor_column),
             }
         }
+    }
+
+    pub fn write_to_text_buffer(&mut self, byte: u8) {
+        TEXT_BUFFER.lock().append_byte(byte);
     }
 
     /* NEW LINE */

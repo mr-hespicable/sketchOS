@@ -15,12 +15,13 @@ use spin::Mutex;
 extern crate alloc;
 
 pub mod allocator;
-pub mod buffer;
 pub mod gdt;
 pub mod interrupts;
 pub mod memory;
+pub mod process_commmand;
 pub mod prompt;
 pub mod serial;
+pub mod text_buffer;
 pub mod vga_buffer;
 
 lazy_static! {

@@ -1,2 +1,2 @@
 break kernal_main
-break vga_buffer.rs:301
+break text_buffer.rs:57

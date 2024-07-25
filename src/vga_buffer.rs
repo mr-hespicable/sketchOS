@@ -117,7 +117,6 @@ lazy_static! {
 impl Writer {
     /* WRITING THINGS */
     pub fn write_byte(&mut self, byte: u8, row: usize, col: usize) {
-        self.write_to_text_buffer(byte);
         match byte {
             b'\n' => {
                 self.move_text(Direction::Right, true);
@@ -151,10 +150,6 @@ impl Writer {
                 _ => self.write_byte(0xfe, self.cursor_row, self.cursor_column),
             }
         }
-    }
-
-    pub fn write_to_text_buffer(&mut self, byte: u8) {
-        TEXT_BUFFER.lock().append_byte(byte);
     }
 
     /* NEW LINE */

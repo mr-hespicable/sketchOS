@@ -28,8 +28,8 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     /* MAIN CODE GOES HERE */
     let fake_prompt = PROMPT.lock().clone();
     draw_prompt!(fake_prompt.clone());
-    let coords: (usize, usize) = (fake_prompt.prompt_row, fake_prompt.prompt_column);
-    print!("{:?}", coords);
+    //let coords: (usize, usize) = (fake_prompt.prompt_row, fake_prompt.prompt_column);
+    //print!("{:?}", coords);
 
     #[cfg(test)]
     test_main();

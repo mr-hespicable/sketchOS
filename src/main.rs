@@ -26,8 +26,7 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap init failed"); // init heap
 
     /* MAIN CODE GOES HERE */
-    let fake_prompt = PROMPT.lock().clone();
-    draw_prompt!(fake_prompt.clone());
+    draw_prompt!();
     //let coords: (usize, usize) = (fake_prompt.prompt_row, fake_prompt.prompt_column);
     //print!("{:?}", coords);
 

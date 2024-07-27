@@ -18,6 +18,7 @@ pub mod allocator;
 pub mod gdt;
 pub mod interrupts;
 pub mod memory;
+pub mod process_command;
 pub mod prompt;
 pub mod serial;
 pub mod text_buffer;

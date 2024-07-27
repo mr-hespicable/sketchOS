@@ -1,5 +1,6 @@
+use crate::process_command::CommandResult;
 use crate::vga_buffer::TEXT_BUFFER;
-use crate::{backspace, gdt, hlt_loop, move_cursor, print, println};
+use crate::{backspace, draw_prompt, gdt, hlt_loop, move_cursor, print, println, PROMPT};
 use alloc::string::ToString;
 use lazy_static::lazy_static;
 use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
@@ -106,13 +107,26 @@ extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStac
             match key {
                 DecodedKey::Unicode(character) => {
                     if scancode == 14 {
-                        // backspace
+                        /*
+                         *
+                         * backspace
+                         *
+                         */
                         TEXT_BUFFER.lock().pop();
                         backspace!();
                     } else if scancode == 28 {
-                        // return
-                        let body = TEXT_BUFFER.lock().process_command();
-                        print!("\n{}", body.unwrap().as_string());
+                        /*
+                         *
+                         * return
+                         *
+                         */
+                        let body: Option<CommandResult> = TEXT_BUFFER.lock().process_command();
+                        match body {
+                            Some(ref data) => print!("{}", data.as_string()),
+                            None => print!("\n"),
+                        }
+                        TEXT_BUFFER.lock().clear_buf(); // clear the buffer
+                        draw_prompt!();
                     } else {
                         // all else
                         TEXT_BUFFER

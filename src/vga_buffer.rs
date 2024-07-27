@@ -170,7 +170,10 @@ impl Writer {
         for row in 0..BUFFER_HEIGHT {
             self.clear_line(row);
         }
-        self.draw_prompt(PROMPT.lock().clone()); // performance cost is acceptable
+        self.cursor_row = 0;
+        self.cursor_column = 0;
+        self.text_row = 0;
+        self.text_column = 0;
     }
 
     fn clear_line(&mut self, row: usize) {
@@ -352,9 +355,7 @@ impl Writer {
         for _ in 0..iterations {
             match direction {
                 Direction::Up => {
-                    if self.cursor_row == 0 {
-                        self.shift_screen(Direction::Up)
-                    }
+                    if self.cursor_row == 0 {}
                     self.cursor_row -= 1;
                 }
                 Direction::Down => {
@@ -414,8 +415,8 @@ impl Writer {
     /* END CURSOR FUNCTIONS */
 
     /* OTHERS */
-    pub fn draw_prompt(&mut self, prompt: Prompt) {
-        self.write_string(prompt.prompt_text.as_str());
+    pub fn draw_prompt(&mut self) {
+        self.write_string(PROMPT.lock().prompt().as_str());
     }
 
     /* END OTHERS */
@@ -485,8 +486,8 @@ macro_rules! move_chars {
 
 #[macro_export]
 macro_rules! draw_prompt {
-    ($prompt:expr) => {
-        $crate::vga_buffer::_draw_prompt($prompt);
+    () => {
+        $crate::vga_buffer::_draw_prompt();
     };
 }
 
@@ -552,9 +553,9 @@ pub fn _move_chars_right() {
 }
 
 #[doc(hidden)]
-pub fn _draw_prompt(prompt: Prompt) {
+pub fn _draw_prompt() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writer.draw_prompt(prompt);
+        writer.draw_prompt();
     })
 }

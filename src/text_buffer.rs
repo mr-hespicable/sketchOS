@@ -1,10 +1,7 @@
-use alloc::{
-    string::{String, ToString},
-    vec::Vec,
-};
+use alloc::{string::String, vec::Vec};
 use core::{fmt, str};
 
-use crate::clear;
+use crate::process_command::{process_command, CommandResult};
 
 #[derive(Default)]
 pub struct TextBuffer {
@@ -16,6 +13,26 @@ impl TextBuffer {
         TextBuffer {
             information: Default::default(),
         }
+    }
+
+    pub fn process_command(&mut self) -> Option<CommandResult> {
+        let mut continue_on = true;
+        let mut clear_screen = false;
+
+        let command = self.as_string();
+        let prefix = command.splitn(2, " ").collect::<Vec<_>>()[0];
+
+        let mut command_result = process_command(command);
+
+        if !continue_on {
+            return None;
+        } else if clear_screen {
+            // TODO: implement clear screen check better
+            return Some(command_result);
+        }
+        command_result.data_bytes.push(b'\n');
+        command_result.data_bytes.insert(0, b'\n');
+        Some(command_result)
     }
 
     /// Converts a `&str` into an iterator over the bytes of the `&str`, then pushes each byte into the buffer.
@@ -46,64 +63,24 @@ impl TextBuffer {
     pub fn len(&self) -> usize {
         self.information.len()
     }
-
     /// Says whether the text buffer is empty or not
     pub fn is_empty(&self) -> bool {
         self.information.is_empty()
     }
 
     pub fn as_string(&self) -> String {
-        if !&self.information.is_ascii() {
-            panic!("command contains non-ascii bytes")
-        }
         String::from_utf8(self.information.clone()).unwrap()
     }
 
-    pub fn process_command(&self) -> Option<CommandResult> {
-        let command = self.as_string();
-
-        if self.is_empty() {
-            return None;
-        }
-
-        if command.starts_with("echo ") {
-            let body: &str = command.splitn(2, " ").collect::<Vec<_>>()[1];
-            let mut data_bytes = body.as_bytes().to_vec();
-            data_bytes.push(b'\n');
-
-            return Some(CommandResult { data_bytes });
-        }
-
-        if command.starts_with("clear") {
-            clear!();
-        }
-
-        None
+    /// Clears the buffer, returning the raw contents of the buffer before it was cleared in its place.
+    pub fn clear_buf(&mut self) -> Vec<u8> {
+        self.information = Default::default();
+        self.information.clone()
     }
 }
 
 impl fmt::Display for TextBuffer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", &self.information)
-    }
-}
-
-#[derive(Default)]
-pub struct CommandResult {
-    data_bytes: Vec<u8>,
-}
-
-impl CommandResult {
-    pub fn as_string(&self) -> String {
-        if !&self.data_bytes.is_ascii() {
-            panic!("command contains non-ascii bytes")
-        }
-        String::from_utf8(self.data_bytes.clone()).unwrap()
-    }
-}
-
-impl fmt::Display for CommandResult {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", &self.data_bytes)
     }
 }

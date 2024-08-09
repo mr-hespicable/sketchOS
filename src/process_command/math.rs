@@ -1,23 +1,38 @@
 use crate::println;
 
-use super::CommandResult;
+use super::{CommandResult, ResultFlags};
 use alloc::{
     boxed::Box,
     string::{String, ToString},
+    vec,
     vec::Vec,
 };
 
+// TODO: create a panic fn so math doesn't freak out
 pub fn math(command: &str) -> CommandResult {
-    let mut expr_raw: &str = command.splitn(2, " ").collect::<Vec<_>>()[1];
-    let expr_parsed = expr_raw.replace(" ", "");
-    let expr = expr_parsed.as_str();
+    let command = command.splitn(2, " ").collect::<Vec<_>>();
+    let body = command.get(1);
+    match body {
+        Some(expr_parsed) => {
+            let expr = expr_parsed.replace(" ", "");
+            let expr = expr.as_str();
 
-    let tokens = tokenize(expr);
-    let (ast, _) = parse(&tokens);
-    let result = evaluate(&ast);
-    CommandResult {
-        data_bytes: result.to_string().as_bytes().to_vec(),
+            let tokens = tokenize(expr);
+            let (ast, _) = parse(&tokens);
+            let result = evaluate(&ast);
+
+            CommandResult {
+                data_bytes: result.to_string().as_bytes().to_vec(),
+                flags: ResultFlags::new(),
+            }
+        }
+        None => CommandResult {
+            // math command is empty
+            data_bytes: "expected >= 1 args; got 0".to_string().as_bytes().to_vec(),
+            flags: ResultFlags::new(),
+        },
     }
+    // let expr_parsed: String = expr_raw.replace(" ", "");
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -39,7 +54,7 @@ enum ASTNode {
         expr: Box<ASTNode>,
     },
     BinaryOp {
-        // eg 1/5
+        // eg 2+9
         left: Box<ASTNode>,
         op: Token,
         right: Box<ASTNode>,

@@ -1,6 +1,7 @@
 #![no_main]
 #![no_std]
 #![feature(custom_test_frameworks)]
+#![feature(asm_const)]
 #![test_runner(sketch_os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
@@ -43,7 +44,8 @@ fn panic_should_fail(_info: &PanicInfo) -> ! {
     hlt_loop();
 }
 
-//tests go here
+// TESTS GO HERE
+
 #[test_case]
 fn test_breakpoint() {
     x86_64::instructions::interrupts::int3();
@@ -59,8 +61,9 @@ fn test_double_fault() {
         recursive_function();
     }
 
-    recursive_function();
+    recursive_function(); //cause fault 1
     unsafe {
+        // cause fault 2
         *(0xdeadbeef as *mut u8) = 42;
     }
 }

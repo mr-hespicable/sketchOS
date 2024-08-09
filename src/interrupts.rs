@@ -1,6 +1,6 @@
 use crate::process_command::CommandResult;
 use crate::vga_buffer::TEXT_BUFFER;
-use crate::{backspace, draw_prompt, gdt, hlt_loop, move_cursor, print, println, PROMPT};
+use crate::{backspace, draw_prompt, gdt, hlt_loop, move_cursor, print, println};
 use alloc::string::ToString;
 use lazy_static::lazy_static;
 use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
@@ -27,7 +27,7 @@ pub enum InterruptIndex {
 }
 
 impl InterruptIndex {
-    fn as_u8(self) -> u8 {
+    pub fn as_u8(self) -> u8 {
         self as u8
     }
 
@@ -120,11 +120,8 @@ extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStac
                          * return
                          *
                          */
-                        let body: Option<CommandResult> = TEXT_BUFFER.lock().process_command();
-                        match body {
-                            Some(ref data) => print!("{}", data.as_string()),
-                            None => print!("\n"),
-                        }
+                        let result: CommandResult = TEXT_BUFFER.lock().process_command();
+                        print!("{}", result.as_string());
                         TEXT_BUFFER.lock().clear_buf(); // clear the buffer
                         draw_prompt!();
                     } else {

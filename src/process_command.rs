@@ -15,6 +15,13 @@ pub mod whoami;
 #[derive(Default, Clone, Debug)]
 pub struct CommandResult {
     pub data_bytes: Vec<u8>,
+    pub flags: ResultFlags,
+}
+
+#[derive(Default, Clone, Debug)]
+pub struct ResultFlags {
+    pub contains_result: bool,
+    pub clear_screen: bool,
 }
 
 impl CommandResult {
@@ -32,6 +39,15 @@ impl fmt::Display for CommandResult {
     }
 }
 
+impl ResultFlags {
+    pub fn new() -> Self {
+        Self {
+            contains_result: true,
+            clear_screen: false,
+        }
+    }
+}
+
 pub fn process_command(command: String) -> CommandResult {
     let prefix = command.splitn(2, " ").collect::<Vec<_>>()[0];
 
@@ -42,9 +58,12 @@ pub fn process_command(command: String) -> CommandResult {
         "iam" => iam(&command),
         "math" => math(&command),
         // "exit" => todo!(), //SIGKILL,
-        _ => {
-            let continue_on = false;
-            CommandResult { data_bytes: vec![] }
-        }
+        _ => CommandResult {
+            data_bytes: vec![],
+            flags: ResultFlags {
+                contains_result: false,
+                clear_screen: false,
+            },
+        },
     }
 }

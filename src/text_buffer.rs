@@ -15,24 +15,25 @@ impl TextBuffer {
         }
     }
 
-    pub fn process_command(&mut self) -> Option<CommandResult> {
-        let mut continue_on = true;
-        let mut clear_screen = false;
-
+    pub fn process_command(&mut self) -> CommandResult {
         let command = self.as_string();
-        let prefix = command.splitn(2, " ").collect::<Vec<_>>()[0];
 
         let mut command_result = process_command(command);
 
-        if !continue_on {
-            return None;
-        } else if clear_screen {
-            // TODO: implement clear screen check better
-            return Some(command_result);
+        let flags = &command_result.flags;
+        if flags.clear_screen {
+            // clear screen
+            command_result
+        } else if flags.contains_result && !flags.clear_screen {
+            // prints something to stdout (echo, whoami, math)
+            command_result.data_bytes.push(b'\n');
+            command_result.data_bytes.insert(0, b'\n');
+            command_result
+        } else {
+            // normal `return` function
+            command_result.data_bytes.push(b'\n');
+            command_result
         }
-        command_result.data_bytes.push(b'\n');
-        command_result.data_bytes.insert(0, b'\n');
-        Some(command_result)
     }
 
     /// Converts a `&str` into an iterator over the bytes of the `&str`, then pushes each byte into the buffer.

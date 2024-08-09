@@ -1,15 +1,12 @@
-use alloc::{
-    format,
-    string::{String, ToString},
-    vec::Vec,
-};
+use alloc::{format, string::ToString, vec::Vec};
 
 use crate::PROMPT;
 
 use super::CommandResult;
 
-pub fn iam(command: &String) -> CommandResult {
-    let body: &str = command.splitn(2, " ").collect::<Vec<_>>()[1];
+pub fn iam(command: &str) -> CommandResult {
+    let command = command.splitn(2, " ").collect::<Vec<_>>();
+    let body = command.get(1).unwrap_or(&"");
     let response;
 
     if body.len() > 16 {
@@ -23,5 +20,6 @@ pub fn iam(command: &String) -> CommandResult {
 
     CommandResult {
         data_bytes: response.as_bytes().to_vec(),
+        flags: super::ResultFlags::new(),
     }
 }

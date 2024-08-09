@@ -1,12 +1,16 @@
-use alloc::{string::String, vec::Vec};
+use core::ops::Deref;
 
-use super::CommandResult;
+use alloc::{vec, vec::Vec};
 
-pub fn echo(command: &String) -> CommandResult {
-    let body: &str = command.splitn(2, " ").collect::<Vec<_>>()[1];
-    let response = body.as_bytes().to_vec();
+use super::{CommandResult, ResultFlags};
+
+pub fn echo(command: &str) -> CommandResult {
+    let command = command.splitn(2, " ").collect::<Vec<_>>();
+    let body = command.get(1);
+    let response = body.unwrap_or(&"").as_bytes().to_vec();
 
     CommandResult {
         data_bytes: response,
+        flags: ResultFlags::new(),
     }
 }

@@ -2,6 +2,7 @@
 #![cfg_attr(test, no_main)]
 #![feature(custom_test_frameworks)]
 #![feature(abi_x86_interrupt)]
+#![feature(asm_const)]
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 #![feature(const_mut_refs)]
@@ -98,13 +99,14 @@ pub fn exit_qemu(exit_code: QemuExitCode) {
     }
 }
 
+/// Intializes the GDT, IDT, and enables interrupts.
 pub fn init() {
     //initialization of the global descriptor table
     gdt::init();
-    //initialization of the interrupt descriptor table
-    interrupts::init_idt();
     //initialization of the 8259 PIC
     unsafe { interrupts::PICS.lock().initialize() };
+    //initialization of the interrupt descriptor table
+    interrupts::init_idt();
     //enable interrupts
     x86_64::instructions::interrupts::enable();
 }

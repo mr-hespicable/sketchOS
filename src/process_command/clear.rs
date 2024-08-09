@@ -1,11 +1,14 @@
-use alloc::{string::String, vec};
+use alloc::vec;
 
 use crate::{clear, process_command::CommandResult};
 
 pub fn clear() -> CommandResult {
-    let empty_result = CommandResult { data_bytes: vec![] };
-    let clear_screen = true;
-
     clear!();
-    empty_result
+    CommandResult {
+        data_bytes: vec![],
+        flags: super::ResultFlags {
+            contains_result: false,
+            clear_screen: true,
+        },
+    }
 }

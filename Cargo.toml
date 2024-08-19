@@ -48,7 +48,3 @@ harness = false
 [[test]]
 name = "stack_overflow"
 harness = false
-
-[[test]]
-name = "early_keyboard_interrupt"
-harness = false

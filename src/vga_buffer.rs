@@ -302,45 +302,14 @@ impl Writer {
                 }
             }
             self.move_cursor(Direction::Left, 1);
-            self.move_text(Direction::Left, false);
         }
     }
 
     fn safe_to_delete(&mut self) -> bool {
         let prompt = PROMPT.lock();
-        (self.cursor_row != prompt.prompt_row) ^ (self.cursor_column > prompt.prompt_column)
-        // true
-    }
-
-    fn move_text(&mut self, direction: Direction, newline_check: bool) {
-        /*
-         *   For the movement of self.text_(column, row).
-         */
-        match direction {
-            Direction::Left => match self.text_column {
-                0 => {
-                    self.text_row -= 1;
-                    self.text_column = BUFFER_WIDTH - 1;
-                }
-                _ => self.text_column -= 1,
-            },
-            Direction::Right => {
-                if self.text_column == BUFFER_WIDTH - 1 {
-                    self.text_row += 1;
-                    self.text_column = 0;
-                } else {
-                    self.text_column += 1;
-                }
-            }
-            _ => panic!(
-                "can't put that as a direction... you put {:?} which doesn't make sense (i hope)",
-                direction
-            ),
-        }
-
-        if newline_check {
-            self.text_row += 1
-        }
+        // if cursor is in the same row as prompt, cursor must be ahead of prompt.
+        // if cursor is not in the same row as prompt, allow deletion.
+        self.cursor_row != prompt.prompt_row || self.cursor_column > prompt.prompt_column
     }
 
     /* END SCREEN FUNCTIONS */

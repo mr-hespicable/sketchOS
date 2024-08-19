@@ -517,4 +517,8 @@ int $0x21
 ```
 this simulates a keyboard interrupt. However, because the PIC is not enabled and interrupts aren't enabled, i am unsure why it is panicking.    
 
+
 22:43: i am going to sleep. i go to cali tmrw, 11 hr flight should work on it then.
+
+ugh. no charger
+seems to be idt after all.

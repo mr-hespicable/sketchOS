@@ -1,3 +1,4 @@
+use alloc::format;
 use core::fmt::{Arguments, Result, Write};
 use lazy_static::lazy_static;
 use spin::Mutex;
@@ -306,14 +307,8 @@ impl Writer {
     }
 
     fn safe_to_delete(&mut self) -> bool {
-        let prompt_row = PROMPT.lock().clone().prompt_row;
-        let prompt_len = PROMPT.lock().clone().len();
-
-        let cursor_not_at_top_left = !(self.cursor_column == 0 && self.cursor_row == 0);
-        let cursor_near_prompt = self.cursor_row == prompt_row && self.cursor_column > prompt_len;
-        let cursor_far_from_prompt = self.cursor_row != prompt_row;
-
-        cursor_not_at_top_left && (cursor_near_prompt || cursor_far_from_prompt)
+        let prompt = PROMPT.lock();
+        (self.cursor_row != prompt.prompt_row) ^ (self.cursor_column > prompt.prompt_column)
         // true
     }
 
@@ -417,6 +412,8 @@ impl Writer {
     /* OTHERS */
     pub fn draw_prompt(&mut self) {
         self.write_string(PROMPT.lock().prompt().as_str());
+        let mut prompt = PROMPT.lock();
+        prompt.prompt_row = self.cursor_row;
     }
 
     /* END OTHERS */

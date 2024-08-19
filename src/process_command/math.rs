@@ -1,37 +1,64 @@
-use crate::println;
+use crate::{print, println};
 
 use super::{CommandResult, ResultFlags};
 use alloc::{
     boxed::Box,
     string::{String, ToString},
-    vec,
+    // vec,
     vec::Vec,
 };
+use lazy_static::lazy_static;
+use spin::Mutex;
 
-// TODO: create a panic fn so math doesn't freak out
+lazy_static! {
+    static ref PANIC: Mutex<bool> = Mutex::new(false);
+}
+
 pub fn math(command: &str) -> CommandResult {
+    *PANIC.lock() = false;
     let command = command.splitn(2, " ").collect::<Vec<_>>();
     let body = command.get(1);
-    match body {
+    let result = match body {
         Some(expr_parsed) => {
             let expr = expr_parsed.replace(" ", "");
             let expr = expr.as_str();
 
             let tokens = tokenize(expr);
-            let (ast, _) = parse(&tokens);
-            let result = evaluate(&ast);
-
+            if !tokens.is_empty() {
+                let (ast, _) = parse(&tokens);
+                let eval_result = evaluate(&ast);
+                CommandResult {
+                    data_bytes: eval_result.to_string().as_bytes().to_vec(),
+                    flags: ResultFlags::new(),
+                }
+            } else {
+                CommandResult {
+                    data_bytes: String::new().as_bytes().to_vec(),
+                    flags: ResultFlags {
+                        contains_result: false,
+                        clear_screen: false,
+                    },
+                }
+            }
+        }
+        None => {
             CommandResult {
-                data_bytes: result.to_string().as_bytes().to_vec(),
+                // math command is empty
+                data_bytes: "expected >= 1 args; got 0".to_string().as_bytes().to_vec(),
                 flags: ResultFlags::new(),
             }
         }
-        None => CommandResult {
-            // math command is empty
-            data_bytes: "expected >= 1 args; got 0".to_string().as_bytes().to_vec(),
+    };
+
+    if *PANIC.lock() {
+        CommandResult {
+            data_bytes: "invalid arguments".to_string().as_bytes().to_vec(),
             flags: ResultFlags::new(),
-        },
+        }
+    } else {
+        result
     }
+
     // let expr_parsed: String = expr_raw.replace(" ", "");
 }
 
@@ -105,8 +132,11 @@ fn tokenize(expr: &str) -> Vec<Token> {
                 chars.next();
             }
             _ => {
-                println!("unexpected character <{}>", char);
-                panic!()
+                print!("\nunexpected character <{}>", char);
+                for _ in chars.clone() {
+                    chars.next(); // advance to the end of the expression
+                }
+                *PANIC.lock() = true;
             }
         }
     }
@@ -119,9 +149,7 @@ fn parse(tokens: &[Token]) -> (ASTNode, &[Token]) {
 }
 
 fn parse_expression(tokens: &[Token]) -> (ASTNode, &[Token]) {
-    let (mut node, tokens) = parse_term(tokens);
-
-    let mut tokens = tokens;
+    let (mut node, mut tokens) = parse_term(tokens);
 
     while let Some(token) = tokens.first() {
         match token {
@@ -142,7 +170,8 @@ fn parse_expression(tokens: &[Token]) -> (ASTNode, &[Token]) {
 }
 
 fn parse_term(tokens: &[Token]) -> (ASTNode, &[Token]) {
-    let (mut node, tokens) = parse_factor(tokens);
+    let nt_pair = parse_factor(tokens);
+    let (mut node, tokens) = (nt_pair.node, nt_pair.tokens);
     let mut tokens = tokens;
     while let Some(token) = tokens.first() {
         match token {
@@ -162,22 +191,23 @@ fn parse_term(tokens: &[Token]) -> (ASTNode, &[Token]) {
     (node, tokens)
 }
 
-fn parse_factor(tokens: &[Token]) -> (ASTNode, &[Token]) {
+fn parse_factor(tokens: &[Token]) -> NTPair {
     match tokens.first() {
         Some(Token::Number(_)) => parse_number(tokens),
         Some(Token::LParen) => {
             let (node, tokens) = parse_expression(&tokens[1..]);
             if tokens.first() == Some(&Token::RParen) {
-                (node, &tokens[1..])
+                NTPair::new(node, &tokens[1..])
             } else {
                 println!("Mismatched parentheses");
-                panic!()
+                panic()
             }
         }
         Some(Token::Add) | Some(Token::Subtract) => {
             let op = tokens[0].clone();
-            let (expr, tokens) = parse_factor(&tokens[1..]);
-            (
+            let nt_pair = parse_factor(&tokens[1..]);
+            let (expr, tokens) = (nt_pair.node, nt_pair.tokens);
+            NTPair::new(
                 ASTNode::UnaryOp {
                     op,
                     expr: Box::new(expr),
@@ -185,19 +215,15 @@ fn parse_factor(tokens: &[Token]) -> (ASTNode, &[Token]) {
                 tokens,
             )
         }
-        _ => {
-            println!("unexpected token <{:?}>", tokens.first().unwrap());
-            panic!()
-        }
+        _ => panic(),
     }
 }
 
-fn parse_number(tokens: &[Token]) -> (ASTNode, &[Token]) {
+fn parse_number(tokens: &[Token]) -> NTPair {
     if let Some(Token::Number(value)) = tokens.first() {
-        (ASTNode::Number(*value), &tokens[1..])
+        NTPair::new(ASTNode::Number(*value), &tokens[1..])
     } else {
-        println!("expected a number, got <{:?}>", tokens.first().unwrap());
-        panic!();
+        panic()
     }
 }
 
@@ -210,8 +236,8 @@ fn evaluate(node: &ASTNode) -> f64 {
                 Token::Add => value,
                 Token::Subtract => -value,
                 _ => {
-                    println!("unexpected operator <{:?}>", op);
-                    panic!();
+                    panic();
+                    0.0
                 }
             }
         }
@@ -224,10 +250,33 @@ fn evaluate(node: &ASTNode) -> f64 {
                 Token::Multiply => left_value * right_value,
                 Token::Divide => left_value / right_value,
                 _ => {
-                    println!("unexpected operator <{:?}>", op);
-                    panic!();
+                    panic();
+                    0.0
                 }
             }
         }
     }
+}
+
+struct NTPair<'a> {
+    node: ASTNode,
+    tokens: &'a [Token],
+}
+
+impl<'a> NTPair<'a> {
+    fn new(node: ASTNode, tokens: &'a [Token]) -> NTPair {
+        NTPair { node, tokens }
+    }
+
+    fn panic() -> NTPair<'a> {
+        NTPair {
+            node: ASTNode::Number(0.0),
+            tokens: &[Token::Number(0.0)],
+        }
+    }
+}
+
+fn panic<'a>() -> NTPair<'a> {
+    *PANIC.lock() = true;
+    NTPair::panic()
 }

@@ -17,13 +17,21 @@ use x86_64::instructions::interrupts::without_interrupts;
 entry_point!(kernal_main);
 #[no_mangle]
 fn kernal_main(bootinfo: &'static BootInfo) -> ! {
-    unsafe {
-        asm!("int 33");
-    }
+    // sketch_os::init();
 
-    without_interrupts(|| {
-        sketch_os::init(); // init idt, and gdt.
-    });
+    use sketch_os::gdt;
+    use sketch_os::interrupts;
+    // initialization of the interrupt descriptor table
+    interrupts::init_idt();
+
+    // initialization of the global descriptor table
+    gdt::init();
+
+    // initialization of the 8259 PIC programmable interrupt controller?
+    unsafe { interrupts::PICS.lock().initialize() };
+
+    x86_64::instructions::interrupts::enable();
+
     use sketch_os::memory;
     use x86_64::VirtAddr;
 

@@ -19,7 +19,7 @@ impl Prompt {
             user,
             machine,
             prompt_row: 0,
-            prompt_column: prompt_length - 1,
+            prompt_column: prompt_length,
         }
     }
 
@@ -28,7 +28,7 @@ impl Prompt {
     }
 
     pub fn is_empty(&self) -> bool {
-        // WHY DO I EVEN NEED THIS. BY SIMPLE LOGIC len()
+        // WHY DO I EVEN NEED THIS. BY LOGIC len()
         // RETURNS A VALUE GREATER THAN 0
         false
     }

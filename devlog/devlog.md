@@ -508,7 +508,8 @@ it's been a while haha - done with memory.
 fixing a problem with doing things before idt is initialized(?)         
 - originally i thought it was just not initializing the idt as i said above - however, this seems to not be the case. This is because when the idt is not initialized (and therefore the pic is not as well).       
 
-2024-08-09 21:11: the system triple faults when this occurs due to the GDT not being loaded, so double faults cannot be handled.   
+2024-08-09 21:11:   
+the system triple faults when this occurs due to the GDT not being loaded, so double faults cannot be handled.   
 
 22:24 some more data:   
 here is the asm call:
@@ -522,3 +523,8 @@ this simulates a keyboard interrupt. However, because the PIC is not enabled and
 
 ugh. no charger
 seems to be idt after all.
+
+2024-08-18   
+21:07   
+giving up on the input thing because i cannot be asked to fix it (the problem is very minute)   
+i've implemented the text buffer for now; i'm going to clean up the vga buffer (remove arrow keys etc)

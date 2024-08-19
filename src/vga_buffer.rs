@@ -1,11 +1,10 @@
-use alloc::format;
 use core::fmt::{Arguments, Result, Write};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
 use x86_64::instructions::interrupts;
 
-use crate::{prompt::Prompt, text_buffer::TextBuffer, PROMPT};
+use crate::{text_buffer::TextBuffer, PROMPT};
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

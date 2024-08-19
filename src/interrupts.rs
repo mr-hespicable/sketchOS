@@ -1,6 +1,6 @@
 use crate::process_command::CommandResult;
 use crate::vga_buffer::TEXT_BUFFER;
-use crate::{backspace, draw_prompt, gdt, hlt_loop, move_cursor, print, println};
+use crate::{backspace, draw_prompt, gdt, hlt_loop, print, println};
 use alloc::string::ToString;
 use lazy_static::lazy_static;
 use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};

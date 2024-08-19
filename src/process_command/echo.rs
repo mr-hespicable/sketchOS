@@ -1,6 +1,4 @@
-use core::ops::Deref;
-
-use alloc::{vec, vec::Vec};
+use alloc::vec::Vec;
 
 use super::{CommandResult, ResultFlags};
 

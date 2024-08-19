@@ -7,7 +7,7 @@ use lazy_static::lazy_static;
 use sketch_os::{exit_qemu, hlt_loop, serial_print, serial_println, QemuExitCode};
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
     serial_print!("stack_overflow::stack_overflow...\t");
 
@@ -49,7 +49,7 @@ extern "x86-interrupt" fn test_double_fault_handler(
 ) -> ! {
     serial_println!("[ok]");
     exit_qemu(QemuExitCode::Success);
-    hlt_loop();
+    hlt_loop()
 }
 
 #[panic_handler]

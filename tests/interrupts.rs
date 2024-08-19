@@ -1,7 +1,6 @@
 #![no_main]
 #![no_std]
 #![feature(custom_test_frameworks)]
-#![feature(asm_const)]
 #![test_runner(sketch_os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
@@ -10,7 +9,7 @@ use sketch_os::{exit_qemu, hlt_loop, serial_println, QemuExitCode};
 
 static mut SHOULD_FAIL: bool = false;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
     sketch_os::init(); //init idt
     test_main();

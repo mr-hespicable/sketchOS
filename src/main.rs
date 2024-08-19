@@ -2,20 +2,16 @@
 #![no_std]
 #![feature(custom_test_frameworks)]
 #![feature(abi_x86_interrupt)]
-#![feature(asm_const)]
 #![test_runner(sketch_os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
 extern crate alloc;
 
 use bootloader::{entry_point, BootInfo};
-use core::arch::asm;
 use core::panic::PanicInfo;
-use sketch_os::{allocator, draw_prompt, memory::BootInfoFrameAllocator, println};
-use x86_64::instructions::interrupts::without_interrupts;
+use sketch_os::{allocator, draw_prompt, memory::BootInfoFrameAllocator};
 
 entry_point!(kernal_main);
-#[no_mangle]
 fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     // sketch_os::init();
 
@@ -58,6 +54,7 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
+    use sketch_os::println;
     println!("{}", info);
     sketch_os::hlt_loop();
 }

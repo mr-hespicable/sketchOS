@@ -16,7 +16,7 @@ lazy_static! { //return task state segment table, with a double fault stack
             const STACK_SIZE: usize = 4096 * 5;
             static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
 
-            let stack_start = VirtAddr::from_ptr(unsafe { addr_of!(STACK) });
+            let stack_start = VirtAddr::from_ptr({ addr_of!(STACK) });
             stack_start + STACK_SIZE
         };
         tss

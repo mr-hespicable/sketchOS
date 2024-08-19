@@ -84,8 +84,6 @@ struct Buffer {
 pub struct Writer {
     cursor_column: usize,  //the position of the cursor (column-wise).
     cursor_row: usize,     //the position of the row (row-wise).
-    text_column: usize,    //the position of the text on the screen (column-wise).
-    text_row: usize,       //the position of the text on the screen (row-wise).
     color_fg: Color,       //foreground color
     color_bg: Color,       //background color
     color_code: ColorCode, //the colorcode
@@ -100,8 +98,6 @@ lazy_static! {
         Mutex::new(Writer {
             cursor_column: 0,
             cursor_row: 0,
-            text_column: 0,
-            text_row: 0,
             color_fg,
             color_bg,
             color_code: ColorCode::new(color_fg, color_bg),
@@ -120,15 +116,10 @@ impl Writer {
     pub fn write_byte(&mut self, byte: u8, row: usize, col: usize) {
         match byte {
             b'\n' => {
-                self.move_text(Direction::Right, true);
                 self.new_line();
                 self.move_cursor(Direction::Right, 0); // place cursor at start of line
             }
             _ => {
-                if self.cursor_column != self.text_column {
-                    // TODO: figure out how to move chars
-                }
-
                 let color_code = self.color_code;
 
                 self.buffer.chars[row][col].write(ScreenChar {
@@ -137,7 +128,6 @@ impl Writer {
                 });
 
                 self.move_cursor(Direction::Right, 1);
-                self.move_text(Direction::Right, false);
             }
         }
     }
@@ -173,8 +163,6 @@ impl Writer {
         }
         self.cursor_row = 0;
         self.cursor_column = 0;
-        self.text_row = 0;
-        self.text_column = 0;
     }
 
     fn clear_line(&mut self, row: usize) {
@@ -195,7 +183,6 @@ impl Writer {
                         self.buffer.chars[row - 1][col].write(char);
                     }
                 }
-                self.text_row -= 1;
             }
             Direction::Up => {
                 for row in (0..BUFFER_HEIGHT - 1).rev() {
@@ -204,84 +191,8 @@ impl Writer {
                         self.buffer.chars[row + 1][col].write(char);
                     }
                 }
-                self.text_row += 1;
             }
             _ => panic!("can't put left or right here m8"),
-        }
-    }
-
-    fn move_chars(&mut self, direction: Direction) {
-        let cursor_row = self.cursor_row;
-        let text_row = self.text_row;
-
-        match direction {
-            Direction::Left => {
-                for row in self.cursor_row..self.text_row {
-                    if cursor_row == text_row {
-                        self.move_line(Direction::Left, self.cursor_column, self.text_column)
-                    }
-                    // moving text spans 1 row
-                    else if row == cursor_row {
-                        self.move_line(Direction::Left, self.cursor_column, BUFFER_WIDTH - 1)
-                    }
-                    // beginning of block of text
-                    else if row == text_row {
-                        self.move_line(Direction::Left, 0, self.text_column)
-                    }
-                    // end of block of text
-                    else {
-                        self.move_line(Direction::Left, 0, BUFFER_WIDTH - 1)
-                    } // middle of block of text
-                }
-            }
-            Direction::Right => {
-                for row in (self.cursor_row..self.text_row).rev() {
-                    if cursor_row == text_row {
-                        self.move_line(Direction::Right, self.cursor_column, self.text_column)
-                    }
-                    // moving text spans 1 row
-                    else if row == cursor_row {
-                        self.move_line(Direction::Right, self.cursor_column, BUFFER_WIDTH - 1)
-                    }
-                    // beginning of block of text
-                    else if row == text_row {
-                        self.move_line(Direction::Right, 0, self.text_column)
-                    }
-                    // end of block of text
-                    else {
-                        self.move_line(Direction::Right, 0, BUFFER_WIDTH - 1)
-                    } // middle of block of text
-                }
-            }
-            _ => panic!("can't put up or down here m8"),
-        }
-    }
-
-    fn move_line(&mut self, direction: Direction, left_col_index: usize, right_col_index: usize) {
-        let row = self.cursor_row;
-
-        match direction {
-            Direction::Left => {
-                for col in left_col_index..right_col_index {
-                    let char = self.buffer.chars[row][col].read();
-
-                    match col {
-                        0 => self.buffer.chars[row - 1][BUFFER_WIDTH - 1].write(char),
-                        _ => self.buffer.chars[row][col - 1].write(char),
-                    }
-                }
-            }
-            Direction::Right => {
-                for col in (left_col_index..right_col_index).rev() {
-                    let char = self.buffer.chars[row][col].read();
-
-                    match col {
-                        79 => self.buffer.chars[row + 1][0].write(char), // TODO: make this flexible
-                        _ => self.buffer.chars[row][col + 1].write(char),
-                    }
-                }
-            }
-            _ => panic!("can't put up or down here m8"),
         }
     }
 
@@ -319,7 +230,9 @@ impl Writer {
         for _ in 0..iterations {
             match direction {
                 Direction::Up => {
-                    if self.cursor_row == 0 {}
+                    if self.cursor_row == 0 {
+                        self.shift_screen(Direction::Up)
+                    }
                     self.cursor_row -= 1;
                 }
                 Direction::Down => {
@@ -441,16 +354,6 @@ macro_rules! move_cursor {
 }
 
 #[macro_export]
-macro_rules! move_chars {
-    (0) => {
-        $crate::vga_buffer::_move_chars_left();
-    };
-    (1) => {
-        $crate::vga_buffer::_move_chars_right();
-    };
-}
-
-#[macro_export]
 macro_rules! draw_prompt {
     () => {
         $crate::vga_buffer::_draw_prompt();
@@ -499,22 +402,6 @@ pub fn _move_cursor_right() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
         writer.move_cursor(Direction::Right, 1);
-    });
-}
-
-#[doc(hidden)]
-pub fn _move_chars_left() {
-    interrupts::without_interrupts(|| {
-        let mut writer = WRITER.lock();
-        writer.move_chars(Direction::Left);
-    });
-}
-
-#[doc(hidden)]
-pub fn _move_chars_right() {
-    interrupts::without_interrupts(|| {
-        let mut writer = WRITER.lock();
-        writer.move_chars(Direction::Right);
     });
 }
 

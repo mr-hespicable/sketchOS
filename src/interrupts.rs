@@ -1,4 +1,7 @@
-use crate::{backspace, gdt, hlt_loop, move_cursor, print, println};
+use crate::process_command::CommandResult;
+use crate::vga_buffer::TEXT_BUFFER;
+use crate::{backspace, draw_prompt, gdt, hlt_loop, move_cursor, print, println};
+use alloc::string::ToString;
 use lazy_static::lazy_static;
 use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 
@@ -24,7 +27,7 @@ pub enum InterruptIndex {
 }
 
 impl InterruptIndex {
-    fn as_u8(self) -> u8 {
+    pub fn as_u8(self) -> u8 {
         self as u8
     }
 
@@ -104,16 +107,28 @@ extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStac
             match key {
                 DecodedKey::Unicode(character) => {
                     if scancode == 14 {
-                        //backspace
+                        /*
+                         *
+                         * backspace
+                         *
+                         */
+                        TEXT_BUFFER.lock().pop();
                         backspace!();
                     } else if scancode == 28 {
-                        print!("\n");
-                        //TODO: get this stuff working
-
-                        //let user = *crate::USER.lock();
-                        //let machine = *crate::MACHINE.lock();
-                        //draw_prompt!(user, machine);
+                        /*
+                         *
+                         * return
+                         *
+                         */
+                        let result: CommandResult = TEXT_BUFFER.lock().process_command();
+                        print!("{}", result.as_string());
+                        TEXT_BUFFER.lock().clear_buf(); // clear the buffer
+                        draw_prompt!();
                     } else {
+                        // all else
+                        TEXT_BUFFER
+                            .lock()
+                            .append_str(character.to_string().as_str());
                         print!("{}", character);
                     }
                 }

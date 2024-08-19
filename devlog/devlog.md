@@ -11,7 +11,7 @@ that's all for now
 goodbye o/
 ## how it hath been so far
 
-soo... i think i might have messed up a bit... but im starting from scratch now (according to my father) 
+soo... i think i might have messed up a bit... but im starting from scratch now (according to my father)
 
 TODO:
 build bootloader
@@ -20,6 +20,7 @@ make operating system
 try not to go insane
 realize that this will help in compsci a-levels
 feel better
+
 ### continuing development of bootloader
 
 # overall game plan B)
@@ -38,12 +39,17 @@ feel better
     - [x] set up double fault exceptions
     - [x] set up hardware interrupts
 - [ ] set up memory management
-    - [ ] implement paging
-    - [ ] add heap allocation
+    - [x] implement paging
+    - [x] add heap allocation
 - [ ] set up multitasking
     - [ ] async/await
 
-#### more things, scratch notes etc
+# TODO LIST: for other things
+- [ ] bugs ew
+    - [ ] typing before os initializes breaks things (why?)
+- [ ] vga_buffer prints slowly (suspect most likely a loop thing)
+
+## more things, scratch notes etc
 
 - POST normally means power on self test, which is when the computer checks if everything is as it should
 - kernal will boot from bios rather than uefi
@@ -54,16 +60,16 @@ feel better
 ### description of each file and its usage.
 
 lib\.rs:
-- library for testing functions (basically a testing crate) 
+- library for testing functions (basically a testing crate)
 
 main\.rs
-- where the main code is stored (it's the file which is actually run) 
+- where the main code is stored (it's the file which is actually run)
 
 serial\.rs
 - this is where the code for printing things to the console is.
 
 vga_buffer.rs
-- this is where the code for writing to the screen is. 
+- this is where the code for writing to the screen is.
 ### starting work on exceptions and interrupts now
 
 the interrupt descriptor table should have a life as long as the code (in this case, the operating system)
@@ -92,19 +98,19 @@ right: `'S'`', src/vga_buffer.rs:205:9
 ```
 
 we have to keep WRITER locked for the duration of whatever is happening.
-so, wrap it in this: 
+so, wrap it in this:
 ```
 interrupts::without_interrupts(|| {
     //code goes here
 });
 ```
-and declare the `lock()` method explicitly: 
+and declare the `lock()` method explicitly:
 ```
-let mut writer = WRITER.lock(); 
+let mut writer = WRITER.lock();
 writer.buffer.chars[bar]
 ```
 
-instead of 
+instead of
 
 ```
 let foo = WRITER.lock().buffer.chars[bar]
@@ -126,7 +132,7 @@ probably remove the colorcode type... maybe set colorcode and stuff to just a fg
 - ~~if col + 1 > buffer width, grab that character in col and move to next line + col 0.~~ this was wrong. just do it reversed. all reversed
 - # devlog for today
 
-### notes on what i'm currently doing 
+### notes on what i'm currently doing
 
 20:01
 
@@ -134,8 +140,8 @@ finally started back on the project after a week-ish long hiatus. this allowed m
 
 i am working on the `move_chars` function in `src/vga_buffer.rs`, which handles the moving of characters when the index of cursor position is not equal to the index of the text position.
 
-the function should be called when this condition is satisfied, and: 
-- on backspace (to move the characters left) 
+the function should be called when this condition is satisfied, and:
+- on backspace (to move the characters left)
 - on keyboard input (to move the characters right)
 
 **<u>updates</u>**
@@ -151,8 +157,8 @@ the function should be called when this condition is satisfied, and:
 - edited `delete_byte` to move stuff after character is deleted.
 - the problem lies in `delete_byte`: i have to figure out when to change `self.text_row`
 
-23:05 
-- starting implementation of an `if` statement to change `self.text_row` when `self.text_column` = 0.    
+23:05
+- starting implementation of an `if` statement to change `self.text_row` when `self.text_column` = 0.
 this should allow me to make `move_chars` work, at least to move them left.
 
 23:47
@@ -211,7 +217,7 @@ to debug with gdb, run `gdb -ex 'file target/x86_64-sketchOS/debug/sketch_os'`, 
 found an error (thank you gdb)
 the first if statement breaks if the column = 0 (i didn't add a condition to handle that)
 fix:
-added 
+added
 ```
 if col == 0 {
     self.buffer.chars[row-1][BUFFER_WIDTH-1].write(character);
@@ -263,18 +269,18 @@ oh yeah im working on a cursor
 
 #cursor implementation is FINISHED
 
-18:58   
+18:58
 resuming arrow movement implementation.
 
-19:01   
+19:01
 never mind it's done i guess
 gonna start work on character movement ->
 should be pretty straightforward - just need to copy move_chars <-
 
-21:47   
+21:47
 yeah i have no clue why it's not working
 
-21:54    
+21:54
 ok i figured it out:
 basically, when we move the byte down to the new line
 ```
@@ -314,34 +320,34 @@ else {
 
 without doing anything to the cursor column; therefore its value becomes 81 (uh oh)
 
-22:25    
+22:25
 scrapping this solution, should be handling line movement in the move_chars fn anyway
 
-2023-11-11   
-11:09   
-i'm gonna try and work on some stuff today! 
+2023-11-11
+11:09
+i'm gonna try and work on some stuff today!
 i put all devlogs into a central 'devlog' file so its easier to read through and actually practically use
 
-11:22   
-move chars -> works fine on a single line, but for some reason it's overwriting the stuff on the next line and i have no clue why...   
+11:22
+move chars -> works fine on a single line, but for some reason it's overwriting the stuff on the next line and i have no clue why...
 
-**debug notes:**    
+**debug notes:**
 when col is 80:
-cursor coords: (0, 80)   
+cursor coords: (0, 80)
 write_col: (1, 3)
-![code](imgs/code1.png)   
+![code](imgs/code1.png)
 **end debug notes**
 
-because of 
+because of
 ```
 match byte {
     b'\n' => self.new_line(),
 ```
 the problem is probably in `new_line()`.
 
-11:51   
+11:51
 i was right.
-problem is in 
+problem is in
 ```
 else {
     self.cursor_row += 1;
@@ -350,7 +356,7 @@ else {
 ```
 problem: write row shouldn't be incremented if it's greater than self.cursor_row => there's an offset.
 
-fix: implement a check to see if write_row is > cursor row.   
+fix: implement a check to see if write_row is > cursor row.
 if false, increment.
 
 15:51
@@ -386,23 +392,23 @@ user@workspace>> hey
 ```
 and then when we add file management, i can actually set the values of user and workspace to something
 
-18:10    
+18:10
 kinda struggling with this lmao concatenating strings is tough when you don't have a std;
 
-2023-11-26     
-22:37      
-prompt works aok.  
-starting work now on making the prompt immune to deletion...  
+2023-11-26
+22:37
+prompt works aok.
+starting work now on making the prompt immune to deletion...
 
-2023-11-27   
-22:05     
-working again on the safe delete thing in `prompt.rs`   
-i think i have a main idea on how i'm going to solve this problem:   
+2023-11-27
+22:05
+working again on the safe delete thing in `prompt.rs`
+i think i have a main idea on how i'm going to solve this problem:
 - redo the entire vga_buffer thing
 maybe tomorrow...
 
-2023-11-29   
-22:27   
+2023-11-29
+22:27
 
 ok it's late but i've made some notes on how i'm going to restructure `vga_buffer.rs`
 
@@ -416,8 +422,8 @@ ok it's late but i've made some notes on how i'm going to restructure `vga_buffe
 - `flip_cursor` (for drawing a cursor to the screen)
 - `move_chars` (for line movement)
 
-2023-11-30   
-21:33   
+2023-11-30
+21:33
 
 shift screen notes
 ```rust
@@ -441,42 +447,42 @@ fn shift_screen(direction: Direction) {
 ```
 this is how i'm planning to implement this fn
 
-2023-12-02   
-20:42   
+2023-12-02
+20:42
 
 some more work, specifically on ```move_cursor()```
 
-for directions up and down, we want an if statement before to check if the cursor is at the very top/bottom, and to shift the screen if it is.  
+for directions up and down, we want an if statement before to check if the cursor is at the very top/bottom, and to shift the screen if it is.
 good thing i have a function for that :)
 
-2023-12-03   
-19:41   
+2023-12-03
+19:41
 
-working on `move_chars()` now... the dreaded one :sob:   
-two directions: left and right. each one needs to match rows: beginning, middle, and end.       
-beginning going -> shifts chars from cursor to the end of the line, and the char at the end of the line to the next line.   
-middle going -> shifts all chars in the row one space to the right, and the char at the end of the line to the next line.  
-end going -> shifts all chars from the beginning of the row to the end of the text area.   
+working on `move_chars()` now... the dreaded one :sob:
+two directions: left and right. each one needs to match rows: beginning, middle, and end.
+beginning going -> shifts chars from cursor to the end of the line, and the char at the end of the line to the next line.
+middle going -> shifts all chars in the row one space to the right, and the char at the end of the line to the next line.
+end going -> shifts all chars from the beginning of the row to the end of the text area.
 
-we have to shift each character from the bottom up, so in theory we check end -> beginning -> middle    
+we have to shift each character from the bottom up, so in theory we check end -> beginning -> middle
 middle is checked last because it has the widest case.
 
 (going <- should just do all this but in reverse.)
 
-in each match statement, i'll set a variable declaring the end limit and the beginning limit. this is mostly for cleanliness and readability. 
-[update 2024-01-03]
-bad idea haha because match statements can't use variables (stupid stupid stupid) so 'if' statements it is
+in each match statement, i'll set a variable declaring the end limit and the beginning limit. this is mostly for cleanliness and readability.       
+[update 2024-01-03]   
+bad idea haha because match statements can't use variables (stupid stupid stupid) so 'if' statements it is      
 
-2023-12-15
-01:41
-man... i realized all the problems i washaving with the display were bc i accidentally made the buffer start pointer `0xb8001` instead of `0xb8000` hahaha
-im very sad but at least its all really pretty now <3
+2023-12-15      
+01:41       
+man... i realized all the problems i was having with the display were bc i accidentally made the buffer start pointer `0xb8001` instead of `0xb8000` hahaha     
+im very sad but at least its all really pretty now <3       
 
-2024-01-03
-13:28
-i took a break but now im back and better than ever         
-move chars works, arrow keys work (left and right that is)          
-now i need to figure out how to make a universal custom enum (the "direction enum"), shown here:
+2024-01-03      
+13:28       
+i took a break but now im back and better than ever     
+move chars works, arrow keys work (left and right that is)      
+now i need to figure out how to make a universal custom enum (the "direction enum"), shown here:        
 ```rust
 enum Direction {
     Up,
@@ -485,13 +491,34 @@ enum Direction {
     Right
 }
 ```
-basically, i need to make it a public enum and i don't know how to do that. unfortunately, i'm on a plane (no internet sob)         
-so i have no way to figure out how to do that (note to self: download rust documentation onto computer)
+basically, i need to make it a public enum and i don't know how to do that. unfortunately, i'm on a plane (no internet sob)
+so i have no way to figure out how to do that (note to self: download rust documentation onto computer)   
+2024-08-08 IT EXISTS LMAO
 
-2024-06-05
-17:55
+2024-06-05      
+17:55       
 it's been a while haha - i'm working on memory now (pretty difficult)
 
+TODO: document this gap in more detail
+
+2024-08-08   
+22:42   
+it's been a while haha - done with memory.
+
+fixing a problem with doing things before idt is initialized(?)         
+- originally i thought it was just not initializing the idt as i said above - however, this seems to not be the case. This is because when the idt is not initialized (and therefore the pic is not as well).       
+
+2024-08-09 21:11: the system triple faults when this occurs due to the GDT not being loaded, so double faults cannot be handled.   
+
+22:24 some more data:   
+here is the asm call:
+```assembly
+int $0x21
+```
+this simulates a keyboard interrupt. However, because the PIC is not enabled and interrupts aren't enabled, i am unsure why it is panicking.    
 
 
+22:43: i am going to sleep. i go to cali tmrw, 11 hr flight should work on it then.
 
+ugh. no charger
+seems to be idt after all.

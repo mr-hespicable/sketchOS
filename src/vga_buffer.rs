@@ -1,11 +1,11 @@
-use alloc::string::ToString;
+use alloc::format;
 use core::fmt::{Arguments, Result, Write};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
 use x86_64::instructions::interrupts;
 
-use crate::prompt::Prompt;
+use crate::{prompt::Prompt, text_buffer::TextBuffer, PROMPT};
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -108,18 +108,23 @@ lazy_static! {
             buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
         })
     };
+
+}
+
+lazy_static! {
+    pub static ref TEXT_BUFFER: Mutex<TextBuffer> = Mutex::new(TextBuffer::new());
 }
 
 impl Writer {
-    /* WRiTING THINGS */
+    /* WRITING THINGS */
     pub fn write_byte(&mut self, byte: u8, row: usize, col: usize) {
         match byte {
             b'\n' => {
-                self.new_line();
-                self.move_cursor(Direction::Right, 1);
                 self.move_text(Direction::Right, true);
+                self.new_line();
+                self.move_cursor(Direction::Right, 0); // place cursor at start of line
             }
-            byte => {
+            _ => {
                 if self.cursor_column != self.text_column {
                     // TODO: figure out how to move chars
                 }
@@ -166,7 +171,10 @@ impl Writer {
         for row in 0..BUFFER_HEIGHT {
             self.clear_line(row);
         }
-        self.draw_prompt("clear -> user", "machine");
+        self.cursor_row = 0;
+        self.cursor_column = 0;
+        self.text_row = 0;
+        self.text_column = 0;
     }
 
     fn clear_line(&mut self, row: usize) {
@@ -299,23 +307,14 @@ impl Writer {
     }
 
     fn safe_to_delete(&mut self) -> bool {
-        //TODO: make this all work
-
-        /*
-        let prompt_length = *crate::PROMPT_LENGTH.lock();
-        let prompt_row = *crate::PROMPT_ROW.lock();
-        if self.cursor_column <= prompt_length && self.cursor_row == prompt_row {
-            false
-        } else {
-            true
-        }
-        */
-        true
+        let prompt = PROMPT.lock();
+        (self.cursor_row != prompt.prompt_row) ^ (self.cursor_column > prompt.prompt_column)
+        // true
     }
 
     fn move_text(&mut self, direction: Direction, newline_check: bool) {
         /*
-         *   For the movement of self.text_[column, row].
+         *   For the movement of self.text_(column, row).
          */
         match direction {
             Direction::Left => match self.text_column {
@@ -351,9 +350,7 @@ impl Writer {
         for _ in 0..iterations {
             match direction {
                 Direction::Up => {
-                    if self.cursor_row == 0 {
-                        self.shift_screen(Direction::Up)
-                    }
+                    if self.cursor_row == 0 {}
                     self.cursor_row -= 1;
                 }
                 Direction::Down => {
@@ -365,8 +362,8 @@ impl Writer {
 
                 Direction::Left => match self.cursor_column {
                     0 => {
-                        self.move_cursor(Direction::Up, 1);
                         self.cursor_column = BUFFER_WIDTH - 1;
+                        self.move_cursor(Direction::Up, 1);
                     }
                     _ => {
                         self.cursor_column -= 1;
@@ -374,8 +371,8 @@ impl Writer {
                 },
                 Direction::Right => {
                     if self.cursor_column == BUFFER_WIDTH - 1 {
-                        self.move_cursor(Direction::Down, 1);
                         self.cursor_column = 0;
+                        self.move_cursor(Direction::Down, 1);
                     } else {
                         self.cursor_column += 1;
                     }
@@ -387,8 +384,9 @@ impl Writer {
 
     fn draw_cursor(&mut self) {
         // make all chars not highlighted
-        for row in 0..BUFFER_HEIGHT - 1 {
-            for col in 0..BUFFER_WIDTH - 1 {
+        // TODO: make this more efficient
+        for row in 0..BUFFER_HEIGHT {
+            for col in 0..BUFFER_WIDTH {
                 let ascii_char = self.buffer.chars[row][col].read().ascii_char;
 
                 self.buffer.chars[row][col].write(ScreenChar {
@@ -412,10 +410,10 @@ impl Writer {
     /* END CURSOR FUNCTIONS */
 
     /* OTHERS */
-    pub fn draw_prompt(&mut self, user: &str, machine: &str) {
-        let prompt: Prompt = Prompt::new(user.to_string(), machine.to_string());
-
-        self.write_string(&prompt.prompt_text as &str);
+    pub fn draw_prompt(&mut self) {
+        self.write_string(PROMPT.lock().prompt().as_str());
+        let mut prompt = PROMPT.lock();
+        prompt.prompt_row = self.cursor_row;
     }
 
     /* END OTHERS */
@@ -447,11 +445,6 @@ macro_rules! print {
 macro_rules! println {
     () => ($crate::print!("\n"));
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
-}
-
-#[macro_export]
-macro_rules! print_byte {
-    ($($arg:tt)*) => ($crate::vga_buffer::_print_byte(format_args!($($arg)*)));
 }
 
 #[macro_export]
@@ -490,8 +483,8 @@ macro_rules! move_chars {
 
 #[macro_export]
 macro_rules! draw_prompt {
-    ($user:expr, $machine:expr) => {
-        $crate::vga_buffer::_draw_prompt($user, $machine);
+    () => {
+        $crate::vga_buffer::_draw_prompt();
     };
 }
 
@@ -506,13 +499,6 @@ pub fn _print(args: Arguments) {
     interrupts::without_interrupts(|| {
         WRITER.lock().write_fmt(args).unwrap();
     });
-}
-
-#[doc(hidden)]
-pub fn _print_byte(args: Arguments) {
-    interrupts::without_interrupts(|| {
-        WRITER.lock().write_fmt(args).unwrap();
-    })
 }
 
 #[doc(hidden)]
@@ -564,9 +550,9 @@ pub fn _move_chars_right() {
 }
 
 #[doc(hidden)]
-pub fn _draw_prompt(user: &str, machine: &str) {
+pub fn _draw_prompt() {
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writer.draw_prompt(user, machine);
+        writer.draw_prompt();
     })
 }

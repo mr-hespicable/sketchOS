@@ -16,16 +16,18 @@ uart_16550 = "0.2.0"
 volatile = "=0.2.6"
 x86_64 = "0.14.2"
 linked_list_allocator = "0.9.0"
+hashbrown = "0.14.5"
+bitflags = "2.6.0"
 
 [package.metadata.bootimage]
 run-command = [
     "qemu-system-x86_64",
-
     "-display",
     "gtk,zoom-to-fit=on",
     "-drive",
     "format=raw,file={}",
 ]
+
 
 test-args = [
     "-device",
@@ -45,4 +47,8 @@ harness = false
 
 [[test]]
 name = "stack_overflow"
+harness = false
+
+[[test]]
+name = "early_keyboard_interrupt"
 harness = false

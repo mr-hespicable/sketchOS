@@ -2,11 +2,16 @@
 #![cfg_attr(test, no_main)]
 #![feature(custom_test_frameworks)]
 #![feature(abi_x86_interrupt)]
+#![feature(asm_const)]
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 #![feature(const_mut_refs)]
 
+use crate::prompt::Prompt;
+use alloc::string::ToString;
 use core::panic::PanicInfo;
+use lazy_static::lazy_static;
+use spin::Mutex;
 
 extern crate alloc;
 
@@ -14,9 +19,16 @@ pub mod allocator;
 pub mod gdt;
 pub mod interrupts;
 pub mod memory;
+pub mod process_command;
 pub mod prompt;
 pub mod serial;
+pub mod text_buffer;
 pub mod vga_buffer;
+
+lazy_static! {
+    pub static ref PROMPT: Mutex<Prompt> =
+        Mutex::new(Prompt::new("user".to_string(), "machine".to_string()));
+}
 
 pub trait Testable {
     fn run(&self);
@@ -87,13 +99,14 @@ pub fn exit_qemu(exit_code: QemuExitCode) {
     }
 }
 
+/// Intializes the GDT, IDT, and enables interrupts.
 pub fn init() {
     //initialization of the global descriptor table
     gdt::init();
-    //initialization of the interrupt descriptor table
-    interrupts::init_idt();
     //initialization of the 8259 PIC
     unsafe { interrupts::PICS.lock().initialize() };
+    //initialization of the interrupt descriptor table
+    interrupts::init_idt();
     //enable interrupts
     x86_64::instructions::interrupts::enable();
 }

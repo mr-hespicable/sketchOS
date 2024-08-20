@@ -528,3 +528,12 @@ seems to be idt after all.
 21:07   
 giving up on the input thing because i cannot be asked to fix it (the problem is very minute)   
 i've implemented the text buffer for now; i'm going to clean up the vga buffer (remove arrow keys etc)
+
+2024-08-19
+10:16
+developing a file system (ext4); the plan is this   
+- [ ] superblock
+- [ ] inodes
+- [ ] block groups
+- [ ] block bitmap
+

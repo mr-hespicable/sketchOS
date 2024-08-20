@@ -7,14 +7,16 @@
 #![feature(const_mut_refs)]
 
 use crate::prompt::Prompt;
-use alloc::string::ToString;
-use core::panic::PanicInfo;
+use alloc::{string::ToString, sync::Arc};
+use core::{panic::PanicInfo, ptr::addr_of_mut};
+use filesystem::DiskImage;
 use lazy_static::lazy_static;
 use spin::Mutex;
 
 extern crate alloc;
 
 pub mod allocator;
+pub mod filesystem;
 pub mod gdt;
 pub mod interrupts;
 pub mod memory;
@@ -23,6 +25,25 @@ pub mod prompt;
 pub mod serial;
 pub mod text_buffer;
 pub mod vga_buffer;
+
+const DISK_SIZE: usize = 0x1000000;
+
+static mut DISK_DATA: [u8; DISK_SIZE] = [0u8; DISK_SIZE];
+
+lazy_static! {
+    pub static ref DISK: Mutex<DiskImage> = {
+        // SAFETY: we ensure that DISK_DATA is accessed in a controlled manner
+        // let data: Arc<Mutex<*mut [u8; 65536]>> = Arc::new(Mutex::new(unsafe {addr_of_mut!(DISK_DATA)}));
+        let data: &'static mut [u8; DISK_SIZE];
+        let block_size: u64 = 4096;
+
+        unsafe {
+            data = addr_of_mut!(DISK_DATA).as_mut().expect("something bad happened whilst unwrapping data");
+        }
+
+        Mutex::new(DiskImage::new(data, block_size))
+    };
+}
 
 lazy_static! {
     pub static ref PROMPT: Mutex<Prompt> =
@@ -99,7 +120,10 @@ pub fn exit_qemu(exit_code: QemuExitCode) {
 }
 
 /// Intializes the GDT, IDT, and enables interrupts.
+/// Also initializes the file system.
 pub fn init() {
+    //initialization of filesystem
+    // filesystem::init();
     //initialization of the global descriptor table
     gdt::init();
     //initialization of the 8259 PIC

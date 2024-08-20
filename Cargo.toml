@@ -8,6 +8,7 @@ edition = "2024"
 
 [dependencies]
 bootloader = { version = "0.9.22", features = ["map_physical_memory"] }
+# bootloader_api = "0.11"
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 pc-keyboard = "0.5.0"
 pic8259 = "0.10.1"
@@ -18,6 +19,8 @@ x86_64 = "0.14.2"
 linked_list_allocator = "0.9.0"
 hashbrown = "0.14.5"
 bitflags = "2.6.0"
+noto-sans-mono-bitmap = "0.3.0"
+log = "0.4.22"
 
 [package.metadata.bootimage]
 run-command = [

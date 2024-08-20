@@ -9,24 +9,22 @@ extern crate alloc;
 
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use sketch_os::{allocator, draw_prompt, memory::BootInfoFrameAllocator};
+use sketch_os::{
+    allocator, draw_prompt,
+    filesystem::{self, superblock::Superblock, BlockDevice, DiskImage},
+    init,
+    memory::BootInfoFrameAllocator,
+    println, DISK,
+};
 
 entry_point!(kernal_main);
+#[unsafe(no_mangle)]
 fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     // sketch_os::init();
 
     use sketch_os::gdt;
     use sketch_os::interrupts;
-    // initialization of the interrupt descriptor table
-    interrupts::init_idt();
-
-    // initialization of the global descriptor table
-    gdt::init();
-
-    // initialization of the 8259 PIC programmable interrupt controller?
-    unsafe { interrupts::PICS.lock().initialize() };
-
-    x86_64::instructions::interrupts::enable();
+    init();
 
     use sketch_os::memory;
     use x86_64::VirtAddr;
@@ -39,8 +37,6 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
 
     /* MAIN CODE GOES HERE */
     draw_prompt!();
-    //let coords: (usize, usize) = (fake_prompt.prompt_row, fake_prompt.prompt_column);
-    //print!("{:?}", coords);
 
     /* main code end */
 

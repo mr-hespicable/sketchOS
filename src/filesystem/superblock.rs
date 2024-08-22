@@ -1,6 +1,6 @@
-use crate::{println, DISK};
+use crate::println;
 
-use super::BlockDevice;
+// use super::BlockDevice;
 
 #[allow(dead_code)]
 #[repr(packed(2))]
@@ -116,20 +116,20 @@ impl Superblock {
         }
     }
 
-    pub fn read_from_disk(disk: &dyn BlockDevice) -> Self {
-        let mut buffer = [0u8; 1024];
-        disk.read_block(1, &mut buffer);
-        buf_to_superblock(&buffer)
-    }
-
-    pub fn init() {
-        let superblock = &Superblock::new();
-        let blocksize = superblock.block_size_log2;
-        println!("{}", blocksize);
-        DISK.lock().write_block(1, superblock_to_buf(superblock));
-    }
-
-    pub fn is_valid(&self) -> bool {
-        self.magic_number == 0xef53
-    }
+    //    pub fn read_from_disk(disk: &dyn BlockDevice) -> Self {
+    //        let mut buffer = [0u8; 1024];
+    //        disk.read_block(1, &mut buffer);
+    //        buf_to_superblock(&buffer)
+    //    }
+    //
+    //    pub fn init() {
+    //        let superblock = &Superblock::new();
+    //        let blocksize = superblock.block_size_log2;
+    //        println!("{}", blocksize);
+    //        DISK.lock().write_block(1, superblock_to_buf(superblock));
+    //    }
+    //
+    //    pub fn is_valid(&self) -> bool {
+    //        self.magic_number == 0xef53
+    //    }
 }

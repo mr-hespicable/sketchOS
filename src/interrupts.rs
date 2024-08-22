@@ -9,6 +9,7 @@ use pic8259::ChainedPics;
 use spin::Mutex;
 use x86_64::instructions::port::Port;
 use x86_64::registers::control::Cr2;
+use x86_64::set_general_handler;
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
@@ -39,6 +40,7 @@ impl InterruptIndex {
 lazy_static! { //set idt table
     static ref IDT: InterruptDescriptorTable = {
         let mut idt = InterruptDescriptorTable::new();//new init of interrupt descriptor table
+
         idt.breakpoint.set_handler_fn(handler_breakpoint);
         unsafe {
             idt.double_fault.set_handler_fn(handler_double_fault)
@@ -51,6 +53,7 @@ lazy_static! { //set idt table
         idt[InterruptIndex::Keyboard.as_usize()]
             .set_handler_fn(handler_interrupt_keyboard);
 
+        set_general_handler!(&mut idt, handler_generic, 40..50);
         idt
     };
 }
@@ -69,9 +72,9 @@ extern "x86-interrupt" fn handler_page_fault(
     error_code: PageFaultErrorCode,
 ) {
     println!("EXCEPTION: PAGE FAULT");
-    println!("Accessed Address: {:?}", Cr2::read());
-    println!("Error Code: {:?}", error_code);
-    println!("{:#?}", stack_frame);
+    // println!("Accessed Address: {:?}", Cr2::read());
+    // println!("Error Code: {:?}", error_code);
+    // println!("{:#?}", stack_frame);
     hlt_loop();
 }
 
@@ -88,7 +91,6 @@ extern "x86-interrupt" fn handler_interrupt_timer(_stack_frame: InterruptStackFr
             .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
     }
 }
-
 extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStackFrame) {
     lazy_static! {
         static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> = Mutex::new(
@@ -139,6 +141,17 @@ extern "x86-interrupt" fn handler_interrupt_keyboard(_stack_frame: InterruptStac
         }
     }
 
+    unsafe {
+        PICS.lock()
+            .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
+    }
+}
+
+fn handler_generic(stack_frame: InterruptStackFrame, index: u8, error_code: Option<u64>) {
+    println!("EXCEPTION: NON-SPECIFIC");
+    println!("Index: {}", index);
+    println!("Error Code: {:?}", error_code);
+    println!("{:#?}", stack_frame);
     unsafe {
         PICS.lock()
             .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());

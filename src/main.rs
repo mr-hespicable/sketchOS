@@ -7,14 +7,16 @@
 
 extern crate alloc;
 
+use alloc::vec;
+use alloc::vec::Vec;
 use bootloader::{entry_point, BootInfo};
-use core::panic::PanicInfo;
+use core::{arch::asm, panic::PanicInfo};
 use sketch_os::{
     allocator, draw_prompt,
-    filesystem::{self, superblock::Superblock, BlockDevice, DiskImage},
+    filesystem::{self, superblock::Superblock},
     init,
     memory::BootInfoFrameAllocator,
-    println, DISK,
+    println,
 };
 
 entry_point!(kernal_main);
@@ -37,6 +39,15 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
 
     /* MAIN CODE GOES HERE */
     draw_prompt!();
+
+    use sketch_os::file::{read, write};
+
+    // let mut read_buf = [0x00u8; 512];
+    // read(0x01000000, 60, &mut read_buf);
+    // println!("read_buf: {:?}", read_buf);
+
+    let example_buf = [0x69u8; 512];
+    write(0x01000000, 60, &example_buf);
 
     /* main code end */
 

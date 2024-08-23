@@ -8,7 +8,6 @@ use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 use pic8259::ChainedPics;
 use spin::Mutex;
 use x86_64::instructions::port::Port;
-use x86_64::registers::control::Cr2;
 use x86_64::set_general_handler;
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
@@ -53,7 +52,7 @@ lazy_static! { //set idt table
         idt[InterruptIndex::Keyboard.as_usize()]
             .set_handler_fn(handler_interrupt_keyboard);
 
-        set_general_handler!(&mut idt, handler_generic, 40..50);
+        set_general_handler!(&mut idt, handler_generic, 46);
         idt
     };
 }

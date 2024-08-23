@@ -529,11 +529,17 @@ seems to be idt after all.
 giving up on the input thing because i cannot be asked to fix it (the problem is very minute)   
 i've implemented the text buffer for now; i'm going to clean up the vga buffer (remove arrow keys etc)
 
-2024-08-19
-10:16
-developing a file system (ext4); the plan is this   
+2024-08-19   
+10:16   
+developing a file system (ext2); the plan is this   
 - [ ] superblock
 - [ ] inodes
 - [ ] block groups
 - [ ] block bitmap
 
+2024-08-22   
+it seems i need to work on file i/o first. i'm using assembly: here's a current problem
+the function `outsw()` breaks when trying to write things that `si` points to into dx. maybe because the `si` is pointing to a big disk location thing? idk. need to do more research. when debugging look at `si`: there are some weird bytes. 
+
+09:31   
+i've fixed the outsw function - it seams the problem is that some interrupt was being called when outsw was occuring. this shouldn't occur; added `without_interrupts()` closure.

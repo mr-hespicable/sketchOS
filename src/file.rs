@@ -1,5 +1,7 @@
 use core::arch::asm;
 
+use x86_64::instructions::interrupts::without_interrupts;
+
 use crate::print;
 
 const ATA_DATA_PORT: u16 = 0x1F0;
@@ -46,19 +48,33 @@ fn insw(port: u16, buffer: &mut [u16]) {
 }
 
 fn outsw(port: u16, buffer: &mut [u16]) {
-    print!("outsw");
     unsafe {
         asm!(
             "rep outsw", // repeat vv for length of buf
             in("dx") port,
-            in("si") buffer.as_ptr()
+            in("si") buffer.as_ptr(),
+            in("cx") buffer.len() as u32,
+            options(nostack, preserves_flags),
         );
     }
 }
 
+fn inw(port: u16) -> u16 {
+    let value: u16;
+    unsafe {
+        asm!(
+            "in ax, dx",
+            in("dx") port,
+            out("ax") value,
+            options(nostack)
+        );
+    }
+    value
+}
+
 pub fn read(lba: u32, sector_count: u8, buffer: &mut [u8]) {
-    let sectors_per_word = 256; // One sector is 512 bytes, so 256 words of 16-bit each
-    let word_count = sector_count as usize * sectors_per_word;
+    let words_per_sector = 256; // One sector is 512 bytes, so 256 words of 16-bit each
+    let word_count = sector_count as usize * words_per_sector;
 
     // set lba mode and drive num
     outb(ATA_DRIVE_HEAD_PORT, 0xe0 | ((lba >> 24) as u8 & 0x0f));
@@ -87,8 +103,8 @@ pub fn read(lba: u32, sector_count: u8, buffer: &mut [u8]) {
 }
 
 pub fn write(lba: u32, sector_count: u8, buffer: &[u8]) {
-    let sectors_per_word = 256; // One sector is 512 bytes, so 256 words of 16-bit each
-    let word_count = sector_count as usize * sectors_per_word;
+    let words_per_sector = 256; // One sector is 512 bytes, so 256 words of 16-bit each
+    let word_count = sector_count as usize * words_per_sector;
 
     // set lba mode and drive num
     outb(ATA_DRIVE_HEAD_PORT, 0xe0 | ((lba >> 24) as u8 & 0x0f));
@@ -106,8 +122,10 @@ pub fn write(lba: u32, sector_count: u8, buffer: &[u8]) {
 
     // write data
     let mut tmp_buffer = [0u16; 256];
-    for i in 0..word_count {
-        tmp_buffer[i] = u16::from_le_bytes([buffer[i * 2], buffer[i * 2 + 1]]);
-        outsw(ATA_DATA_PORT, &mut tmp_buffer)
-    }
+    without_interrupts(|| {
+        for i in 0..word_count {
+            tmp_buffer[i] = u16::from_le_bytes([buffer[i * 2], buffer[i * 2 + 1]]);
+            outsw(ATA_DATA_PORT, &mut tmp_buffer)
+        }
+    })
 }

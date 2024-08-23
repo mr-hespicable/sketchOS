@@ -47,7 +47,10 @@ fn kernal_main(bootinfo: &'static BootInfo) -> ! {
     // println!("read_buf: {:?}", read_buf);
 
     let example_buf = [0x69u8; 512];
-    write(0x01000000, 60, &example_buf);
+    let mut read_buf = [0u8; 512];
+    write(0x100000, 1, &example_buf);
+    read(0x100000, 1, &mut read_buf);
+    println!("{:?}", read_buf);
 
     /* main code end */
 
